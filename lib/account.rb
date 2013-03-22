@@ -1,10 +1,11 @@
 # -*- encoding : utf-8 -*-
-module Shopelia
+module Vulcain
   class Account
     include ActionsHelper
     
     def initialize(user)
       @user = user
+      self.class.class_eval { include(RueDuCommerce) }
     end
     
     def create
@@ -49,8 +50,8 @@ module Shopelia
     end
     
     def fill_birthday
-      select_option(BIRTH_DAY_SELECT, @user.birthday.day.to_s)
-      select_option(BIRTH_MONTH_SELECT, @user.birthday.month.to_s)
+      select_option(BIRTH_DAY_SELECT, @user.birthday.day.to_s.to_s.rjust(2, "0"))
+      select_option(BIRTH_MONTH_SELECT, @user.birthday.month.to_s.rjust(2, "0"))
       select_option(BIRTH_YEAR_SELECT, @user.birthday.year.to_s)
     end
     

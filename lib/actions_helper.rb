@@ -1,4 +1,4 @@
-module Shopelia
+module Vulcain
   module ActionsHelper
   
     def driver
@@ -30,8 +30,7 @@ module Shopelia
           element = driver.find_element(:xpath => xpath)
           element.click
         rescue => e
-          sleep(0.1)
-          retry
+          sleep(0.1) and retry
         end  
       end
     end
@@ -43,19 +42,15 @@ module Shopelia
     
     def get_element_by_match xpath, block
       element = nil
-      b = block
       wait.until do 
         begin
-        
         elements = get_elements(xpath)
-        links = elements.select(&b)
+        links = elements.select(&block)
         element = links.first
         links.any?
         rescue
-          sleep(0.1)
-          retry
+          sleep(0.1) and retry
         end  
-        
       end
       element
     end
