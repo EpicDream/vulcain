@@ -14,8 +14,8 @@ class Driver
     @driver.get url
   end
 
-  def select_option xpath, value
-    options = get_element(xpath).find_elements(:tag_name, "option")
+  def select_option select, value
+    options = select.find_elements(:tag_name, "option")
     options.each do |option|
       if option.attribute("value") == value
         option.click
@@ -23,16 +23,10 @@ class Driver
       end
     end
   end
-
-  def fill xpath, args={}
-    element = get_element(xpath)
-    element.send_key args[:with]
-  end
-
-  def click_on xpath
+  
+  def click_on element
     wait.until do 
       begin
-        element = driver.find_element(:xpath => xpath)
         element.click
       rescue => e
         sleep(0.1) and retry
@@ -40,36 +34,42 @@ class Driver
     end
   end
 
-  def get_elements xpath
-    wait.until { driver.find_elements(:xpath => xpath).any? }
-    driver.find_elements(:xpath => xpath)
+  
+  def find_select label
+    wait.until do
+      begin
+        element = driver.find_elements(:xpath => "//*[text()='#{label}']").first
+        if element && element.tag_name != "select"
+          element = driver.find_elements(:xpath => "//*[text()='#{label}']/following-sibling::select").first
+        end
+        element
+      rescue => e
+        puts e.inspect
+        sleep(0.1) and retry
+      end
+    end
+    
   end
   
   def find_element displayed_text
     wait.until do
-      links = driver.find_elements(:xpath => ".//a")
-      links.select { |link| link.text.downcase == displayed_text.downcase }.first
-    end
-    
-  end
-
-  def get_element_by_match xpath, block
-    element = nil
-    wait.until do 
       begin
-      elements = get_elements(xpath)
-      links = elements.select(&block)
-      element = links.first
-      links.any?
-      rescue
+        link = driver.find_elements(:xpath => "//*[text()='#{displayed_text}']").first
+        unless link
+          link = driver.find_elements(:xpath => "//*[@value='#{displayed_text}']").first
+        end
+        if link && link.tag_name == "label"
+          link = driver.find_elements(:xpath => "//*[text()='#{displayed_text}']/following-sibling::input").first
+          unless link
+            link = driver.find_elements(:xpath => "//*[text()='#{displayed_text}']/input").first
+          end
+        end
+        link
+      rescue => e
+        puts e.inspect
         sleep(0.1) and retry
-      end  
+      end
     end
-    element
   end
-
-  def get_element xpath
-    wait.until { driver.find_element(:xpath => xpath) }
-  end
-
+  
 end
