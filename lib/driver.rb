@@ -7,7 +7,11 @@ class Driver
   
   def initialize
     @driver = Selenium::WebDriver.for :chrome, :switches => ["--user-agent=#{USER_AGENT}"]
-    @wait = Selenium::WebDriver::Wait.new(:timeout => 10)
+    @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
+  end
+  
+  def quit
+    @driver.quit
   end
   
   def get url
@@ -39,6 +43,9 @@ class Driver
     wait.until do
       begin
         element = driver.find_elements(:xpath => "//*[text()='#{label}']").first
+        unless element
+          element = driver.find_elements(:xpath => "//*[@name='#{label}']").first
+        end
         if element && element.tag_name != "select"
           element = driver.find_elements(:xpath => "//*[text()='#{label}']/following-sibling::select").first
         end
@@ -51,23 +58,47 @@ class Driver
     
   end
   
-  def find_element displayed_text
+  def find_element label
     wait.until do
       begin
-        link = driver.find_elements(:xpath => "//*[text()='#{displayed_text}']").first
+        link = driver.find_elements(:xpath => "//*[text()='#{label}']").first
         unless link
-          link = driver.find_elements(:xpath => "//*[@value='#{displayed_text}']").first
+          link = driver.find_elements(:xpath => "//*[@value='#{label}']").first
+        end
+        unless link
+          link = driver.find_elements(:xpath => "//*[@name='#{label}']").first
         end
         if link && link.tag_name == "label"
-          link = driver.find_elements(:xpath => "//*[text()='#{displayed_text}']/following-sibling::input").first
+          link = driver.find_elements(:xpath => "//*[text()='#{label}']/following-sibling::input").first
           unless link
-            link = driver.find_elements(:xpath => "//*[text()='#{displayed_text}']/input").first
+            link = driver.find_elements(:xpath => "//*[text()='#{label}']/input").first
           end
         end
         link
       rescue => e
         puts e.inspect
         sleep(0.1) and retry
+      end
+    end
+  end
+  
+  def find_element_by_xpath xpath, options={}
+    if options[:nowait]
+      driver.find_elements(:xpath => xpath)
+    else
+      wait.until { driver.find_element(:xpath => xpath) }
+    end
+  end
+  
+  def find_elements_by_xpath xpath
+    wait.until { driver.find_element(:xpath => xpath) }
+  end
+  
+  def wait_for labels
+    wait.until do
+      labels.inject(nil) do |element, label| 
+        element = driver.find_elements(:xpath => "//*[text()='#{label}']").first
+        break element if element
       end
     end
   end
