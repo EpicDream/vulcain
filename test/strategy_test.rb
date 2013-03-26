@@ -26,7 +26,6 @@ describe Strategy do
     end
     
     it 'should be able to click on element given by xpath' do
-      skip
       strategy = Strategy.new(@context, Driver.new) do
         open_url "http://m.rueducommerce.fr"
         click_on :xpath => "//li[@class='cart']"
