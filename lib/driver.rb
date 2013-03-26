@@ -38,7 +38,6 @@ class Driver
     end
   end
 
-  
   def find_select label
     wait.until do
       begin
