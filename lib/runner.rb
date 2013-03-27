@@ -1,20 +1,24 @@
 require_relative 'vulcain'
-require File.join(File.dirname(__FILE__), "strategies/rue_du_commerce")
+require_strategy 'rue_du_commerce'
+require_strategy 'fnac'
+USER_ACCOUNT_PASSWORD = "shopelia2013"
 
-PRODUCT_URL = "http://m.rueducommerce.fr/fiche-produit/Galaxytab2-P5110-16Go-Blanc-OP"
-
-User = Struct.new(:firstname, :lastname, :email, :address, :city, :postalcode, :birthday, :gender)
-Account = Struct.new(:email, :password)
+User = Struct.new(:firstname, :lastname, :email, :address, :city, :postalcode, :birthday, :gender, :telephone)
 Order = Struct.new(:product_url, :card_number, :card_crypto, :expire_month, :expire_year)
 
-user = User.new("Mad", "Max", "madmax_1191@yopmail.com", "12 rue des Lilas", "Paris", "75002", Date.parse("1985-10-10"), 0)
-account = Account.new("madmax_1180@yopmail.com", "shopelia")
-order = Order.new(PRODUCT_URL, "87989898", "345", "01", "16")
-driver = Driver.new
-context = {user:user, password:"shopelia", account:account, order:order}
+user = User.new("Mad", "Max", "madmax_04@yopmail.com", "12 rue des Lilas", "Paris", "75002", Date.parse("1985-10-01"), 0, "0102453456")
 
+driver = Driver.new
+order = Order.new("http://www.rueducommerce.fr/Composants/Cle-USB/Cles-USB/LEXAR/4845912-Cle-USB-2-0-Lexar-JumpDrive-V10-8Go-LJDV10-8GBASBEU.htm", "87989898", "345", "01", "16")
+context = {user:user, password:USER_ACCOUNT_PASSWORD, order:order}
 #RueDuCommerce.new(driver, context).account.run
- RueDuCommerce.new(driver, context).login.run
- RueDuCommerce.new(driver, context).order.run
+#RueDuCommerce.new(driver, context).login.run
+#RueDuCommerce.new(driver, context).order.run
+
+order = Order.new("http://jeux-video.fnac.com/a5273593/Gears-of-War-Judgment-Jeu-Xbox-360", "87989898", "345", "01", "16")
+context = {user:user, password:USER_ACCOUNT_PASSWORD, order:order}
+Fnac.new(driver, context).account.run
+# Fnac.new(driver, context).login.run
+# Fnac.new(driver, context).order.run
 
 #driver.quit

@@ -17,43 +17,34 @@ class Strategy
     @driver.get url
   end
   
-  def click_on identifier
-    if identifier.is_a?(Hash) && xpath = identifier[:xpath]
-      @driver.click_on(@driver.find_element_by_xpath xpath)
-    else
-      @driver.click_on @driver.find_element(identifier)
-    end
+  def click_on xpath
+    @driver.click_on @driver.find_element(xpath)
   end
   
-  def click_on_image url
-    image = @driver.find_element_by_xpath("//img[@src='#{url}']")
-    @driver.click_on(image)
+  def click_on_if_exists xpath
+    element = @driver.find_element(xpath, nowait:true)
+    @driver.click_on(element) if element
   end
   
-  def click_on_all xpath, &block
+  def click_on_all xpath
     begin
-      element = @driver.find_element_by_xpath(xpath, nowait:true).first
+      element = @driver.find_element(xpath, nowait:true)
       @driver.click_on(element) if element
-      block.call 
     end while element
   end
   
-  def fill label, args={}
-    input = @driver.find_element(label)
+  def fill xpath, args={}
+    input = @driver.find_element(xpath)
     input.send_key args[:with]
   end
   
-  def select_option label, value
-    select = @driver.find_select(label)
+  def select_option xpath, value
+    select = @driver.find_element(xpath)
     @driver.select_option(select, value)
   end
   
-  def wait_for labels
-    @driver.wait_for(labels)
-  end
-  
-  def assert_element label
-    @driver.wait_for([label])
+  def assert_element xpath
+    @driver.find_element(xpath)
   end
   
 end

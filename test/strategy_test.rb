@@ -7,30 +7,22 @@ describe Strategy do
   end
   
   after do
-    `killall Google\\ Chrome` #osx
   end
 
   describe "dsl" do
    
     it "should respond to open_url, fill input, select option, click_on : radio_button, links with label" do
-      strategy = Strategy.new(@context, Driver.new) do
-        open_url "http://m.rueducommerce.fr"
-        click_on "menu"
-        click_on "Mon compte"
-        click_on "Créer son compte"
-        fill("Prénom", with: "Philippe")
-        click_on "M."
-        click_on "Créer un compte complet"
+      driver = Driver.new
+      strategy = Strategy.new(@context, driver) do
+        open_url "http://www.rueducommerce.fr/home/index.htm"
+        click_on '//*[@id="linkJsAccount"]/div/div[2]/span[1]'
+        fill '//*[@id="loginNewAccEmail"]', with:'madmax_03@yopmail.com'
+        click_on '//*[@id="loginNewAccSubmit"]'
+        select_option '//*[@id="content"]/form/div/div[2]/div/div[7]/select[1]', "12"
+        click_on '//*[@id="content"]/form/div/div[3]/div/div[3]/input[1]'
       end
       assert strategy.run
-    end
-    
-    it 'should be able to click on element given by xpath' do
-      strategy = Strategy.new(@context, Driver.new) do
-        open_url "http://m.rueducommerce.fr"
-        click_on :xpath => "//li[@class='cart']"
-      end
-      assert strategy.run
+      driver.quit
     end
     
   end
