@@ -30,7 +30,7 @@ describe RueDuCommerce do
         click_on RueDuCommerce::ADD_TO_CART
         click_on RueDuCommerce::ACCESS_CART
         click_on_all([RueDuCommerce::REMOVE_PRODUCT]) { |element| element || exists?(RueDuCommerce::REMOVE_PRODUCT)}
-        exists? EMPTY_CART_MESSAGE
+        exists? RueDuCommerce::EMPTY_CART_MESSAGE
       end
       
       assert strategy.run

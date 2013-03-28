@@ -16,7 +16,7 @@ describe Strategy do
       strategy = Strategy.new(@context, driver) do
         open_url "http://www.rueducommerce.fr/home/index.htm"
         click_on '//*[@id="linkJsAccount"]/div/div[2]/span[1]'
-        fill '//*[@id="loginNewAccEmail"]', with:'madmax_03@yopmail.com'
+        fill '//*[@id="loginNewAccEmail"]', with:'madmax_031@yopmail.com'
         click_on '//*[@id="loginNewAccSubmit"]'
         select_option '//*[@id="content"]/form/div/div[2]/div/div[7]/select[1]', "12"
         click_on '//*[@id="content"]/form/div/div[3]/div/div[3]/input[1]'

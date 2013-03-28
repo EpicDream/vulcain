@@ -9,7 +9,6 @@ class Strategy
   end
   
   def run
-    raise unless context
     self.instance_eval(&@block)
   end
   

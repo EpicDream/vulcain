@@ -13,8 +13,8 @@ class Fnac
       open_url URL
       click_on MY_ACCOUNT
       fill EMAIL_CREATE, with:context[:user].email
-      fill PASSWORD_CREATE, with:context[:password]
-      fill PASSWORD_CONFIRM, with:context[:password]
+      fill PASSWORD_CREATE, with:context[:order].account_password
+      fill PASSWORD_CONFIRM, with:context[:order].account_password
       click_on CREATE_ACCOUNT
       click_on_radio context[:user].gender, {0 => CIVILITY_M, 1 =>  CIVILITY_MME, 2 =>  CIVILITY_MLLE}
       fill LASTNAME, with:context[:user].lastname
@@ -55,7 +55,7 @@ class Fnac
       click_on VALIDATE_ORDER
       
       fill ORDER_EMAIL, with:context[:user].email
-      fill ORDER_PASSWORD, with: context[:password]
+      fill ORDER_PASSWORD, with:context[:order].account_password
       click_on ORDER_LOGIN
       
       wait_for([POSTAL_ADDRESS_LABEL])

@@ -15,17 +15,13 @@ class RueDuCommerce
       click_on MY_ACCOUNT
       fill EMAIL_CREATE, with:context[:user].email
       click_on CREATE_ACCOUNT
-      fill PASSWORD_CREATE, with:context[:password]
-      fill PASSWORD_CONFIRM, with:context[:password]
+      fill PASSWORD_CREATE, with:context[:order].account_password
+      fill PASSWORD_CONFIRM, with:context[:order].account_password
       select_option BIRTH_DAY, context[:user].birthday.day.to_s
       select_option BIRTH_MONTH, context[:user].birthday.month.to_s
       select_option BIRTH_YEAR, context[:user].birthday.year.to_s
       fill PHONE, with:context[:user].telephone
-      case context[:user].gender
-      when 0 then click_on CIVILITY_M
-      when 1 then click_on CIVILITY_MME
-      when 2 then click_on CIVILITY_MLLE
-      end
+      click_on_radio context[:user].gender, {0 => CIVILITY_M, 1 =>  CIVILITY_MME, 2 =>  CIVILITY_MLLE}
       fill FIRSTNAME, with:context[:user].firstname
       fill LASTNAME, with:context[:user].lastname
       fill ADDRESS, with:context[:user].address
@@ -41,7 +37,7 @@ class RueDuCommerce
       click_on_if_exists SKIP
       click_on MY_ACCOUNT
       fill EMAIL_LOGIN, with:context[:user].email
-      fill PASSWORD_LOGIN, with:context[:password]
+      fill PASSWORD_LOGIN, with:context[:order].account_password
       click_on LOGIN_BUTTON
     end
   end
