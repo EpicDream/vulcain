@@ -1,5 +1,5 @@
 require 'test_helper'
-require_lib 'strategies/rue_du_commerce'
+require_lib 'strategies/rue_du_commerce/rue_du_commerce'
 
 describe RueDuCommerce do
   PRODUCT_1_URL = "http://www.rueducommerce.fr/Composants/Cle-USB/Cles-USB/LEXAR/4845912-Cle-USB-2-0-Lexar-JumpDrive-V10-8Go-LJDV10-8GBASBEU.htm"
@@ -29,9 +29,8 @@ describe RueDuCommerce do
         open_url PRODUCT_2_URL
         click_on RueDuCommerce::ADD_TO_CART
         click_on RueDuCommerce::ACCESS_CART
-        click_on_all RueDuCommerce::REMOVE_PRODUCT
-        
-        assert_element RueDuCommerce::EMPTY_CART_MESSAGE
+        click_on_all([RueDuCommerce::REMOVE_PRODUCT]) { |element| element || exists?(RueDuCommerce::REMOVE_PRODUCT)}
+        exists? EMPTY_CART_MESSAGE
       end
       
       assert strategy.run

@@ -18,6 +18,14 @@ class Driver
   def get url
     @driver.get url
   end
+  
+  def alert?
+    @driver.alert?
+  end
+  
+  def accept_alert
+    @driver.switch_to.alert.accept
+  end
 
   def select_option select, value
     options = select.find_elements(:tag_name, "option")

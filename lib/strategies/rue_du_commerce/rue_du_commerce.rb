@@ -17,9 +17,9 @@ class RueDuCommerce
       click_on CREATE_ACCOUNT
       fill PASSWORD_CREATE, with:context[:password]
       fill PASSWORD_CONFIRM, with:context[:password]
-      select_option BIRTH_DAY_SELECT, context[:user].birthday.day.to_s
-      select_option BIRTH_MONTH_SELECT, context[:user].birthday.month.to_s
-      select_option BIRTH_YEAR_SELECT, context[:user].birthday.year.to_s
+      select_option BIRTH_DAY, context[:user].birthday.day.to_s
+      select_option BIRTH_MONTH, context[:user].birthday.month.to_s
+      select_option BIRTH_YEAR, context[:user].birthday.year.to_s
       fill PHONE, with:context[:user].telephone
       case context[:user].gender
       when 0 then click_on CIVILITY_M
@@ -50,8 +50,8 @@ class RueDuCommerce
     Strategy.new(@context, @driver) do
       #ensure empty cart
       click_on MY_CART
-      click_on_all REMOVE_PRODUCT
-      raise unless assert_element EMPTY_CART_MESSAGE
+      click_on_all([REMOVE_PRODUCT]) { |element| element || exists?(REMOVE_PRODUCT)}
+      raise unless exists? EMPTY_CART_MESSAGE
       
       #order
       open_url context[:order].product_url

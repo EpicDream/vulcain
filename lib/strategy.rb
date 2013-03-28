@@ -26,15 +26,23 @@ class Strategy
     @driver.click_on(element) if element
   end
   
-  def click_on_all xpath
+  def click_on_all xpaths
+    start = Time.now
     begin
-      element = @driver.find_element(xpath, nowait:true)
+      element = xpaths.inject(nil) do |element, xpath|
+        element = @driver.find_element(xpath, nowait:true)
+        break element if element
+        element
+      end
       @driver.click_on(element) if element
-    end while element
+      continue = yield element
+      raise if continue && Time.now - start > 30
+    end while continue
   end
   
   def fill xpath, args={}
     input = @driver.find_element(xpath)
+    input.clear
     input.send_key args[:with]
   end
   
@@ -43,8 +51,20 @@ class Strategy
     @driver.select_option(select, value)
   end
   
-  def assert_element xpath
-    @driver.find_element(xpath)
+  def exists? xpath
+    !!@driver.find_element(xpath, nowait:true)
+  end
+  
+  def wait_for xpaths
+    xpaths.each { |xpath| @driver.find_element(xpath) }
+  end
+  
+  def alert?
+    @driver.alert?
+  end
+  
+  def accept_alert
+    @driver.accept_alert
   end
   
 end
