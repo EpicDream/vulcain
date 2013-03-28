@@ -26,6 +26,12 @@ class Strategy
     @driver.click_on(element) if element
   end
   
+  def click_on_radio value, choices
+    choices.each do |choice, xpath|
+      click_on(xpath) and break if choice == value
+    end
+  end
+  
   def click_on_all xpaths
     start = Time.now
     begin

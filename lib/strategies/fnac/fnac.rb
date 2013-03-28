@@ -16,11 +16,7 @@ class Fnac
       fill PASSWORD_CREATE, with:context[:password]
       fill PASSWORD_CONFIRM, with:context[:password]
       click_on CREATE_ACCOUNT
-      case context[:user].gender
-      when 0 then click_on CIVILITY_M
-      when 1 then click_on CIVILITY_MME
-      when 2 then click_on CIVILITY_MLLE
-      end
+      click_on_radio context[:user].gender, {0 => CIVILITY_M, 1 =>  CIVILITY_MME, 2 =>  CIVILITY_MLLE}
       fill LASTNAME, with:context[:user].lastname
       fill FIRSTNAME, with:context[:user].firstname
       select_option BIRTH_DAY, context[:user].birthday.day.to_s.rjust(2, "0")
