@@ -1,21 +1,28 @@
 # encoding: utf-8
 require "rubygems"
 require "amqp"
- 
+
+IP_DISPATCHER = "176.31.231.202"
+
 AMQP.start(:host => "127.0.0.1", :username => "guest", :password => "guest") do |connection|
+  channel_dispatcher = AMQP::Channel.new(AMQP::Session.connect(:host => IP_DISPATCHER, :username => "guest", :password => "guest"))
+  channel_dispatcher.on_error do |ch, channel_close|
+    puts "A channel_dispatcher-level exception: #{channel_close.inspect}"
+  end
+  exchange_dispatcher = channel_dispatcher.headers("amq.match", :durable => true)
+
   channel = AMQP::Channel.new(connection)
   
   channel.on_error do |ch, channel_close|
-    puts "A channel-level exception: #{channel_close.inspect}"
+    puts "A channel_dispatcher-level exception: #{channel_close.inspect}"
   end
-
   exchange = channel.headers("amq.match", :durable => true)
+
 
   channel.queue.bind(exchange, :arguments => { 'x-match' => 'all', :vulcain => "1"}).subscribe do |metadata, payload|
     puts "Vulcain 1 received message : #{payload}" #voir #{metadata.inspect}
-    
     EM.add_timer(2) do
-      exchange.publish "Cher dispatcher Vulcain 1 a commandé",   :headers => { :dispatcher => "1"}
+      exchange_dispatcher.publish "Cher dispatcher Vulcain 1 a commandé",   :headers => { :dispatcher => "1"}
     end
   end
 

@@ -2,32 +2,46 @@
 require "rubygems"
 require "amqp"
  
-AMQP.start(:host => "127.0.0.1", :username => "guest", :password => "guest") do |connection|
-  # puts connection.inspect
-  puts AMQP::Session.connect(:host => "178.32.212.201", :username => "guest", :password => "guest").inspect
-  channel = AMQP::Channel.new(connection)
-  
-  channel.on_error do |ch, channel_close|
-    puts "A channel-level exception: #{channel_close.inspect}"
-  end
+IP_DISPATCHER = "127.0.0.1"
+VULCAIN_1_IP = "178.32.212.201"
+VULCAIN_2_IP = "178.32.212.201"
 
-  exchange = channel.headers("amq.match", :durable => true)
+AMQP.start(:host => IP_DISPATCHER, :username => "guest", :password => "guest") do |connection|
+  # puts connection.inspect
+  channel_vulcain_1 = AMQP::Channel.new(AMQP::Session.connect(:host => VULCAIN_1_IP, :username => "guest", :password => "guest"))
+  channel_vulcain_2 = AMQP::Channel.new(AMQP::Session.connect(:host => VULCAIN_2_IP, :username => "guest", :password => "guest"))
+  channel_dispatcher = AMQP::Channel.new(connection)
+  
+  channel_dispatcher.on_error do |ch, channel_close|
+    puts "A channel_dispatcher-level exception: #{channel_close.inspect}"
+  end
+  channel_vulcain_1.on_error do |ch, channel_close|
+    puts "A channel_vulcain_1-level exception: #{channel_close.inspect}"
+  end
+  channel_vulcain_2.on_error do |ch, channel_close|
+    puts "A channel_vulcain_2-level exception: #{channel_close.inspect}"
+  end
+  
+
+  exchange_dispatcher = channel_dispatcher.headers("amq.match", :durable => true)
+  exchange_vulcain_1 = channel_vulcain_1.headers("amq.match", :durable => true)
+  exchange_vulcain_2 = channel_vulcain_2.headers("amq.match", :durable => true)
   
   count_1 = 0
   count_2 = 0
   
-  channel.queue.bind(exchange, :arguments => { 'x-match' => 'all', :dispatcher => "1"}).subscribe do |metadata, payload|
+  channel_dispatcher.queue.bind(exchange_dispatcher, :arguments => { 'x-match' => 'all', :dispatcher => "1"}).subscribe do |metadata, payload|
     puts "Dispatcher vulcain 1 received message : #{payload}" #voir #{metadata.inspect}
-    exchange.publish "Vulcain 1 commande moi ça stp #{count_1 += 1}",   :headers => { :vulcain => "1"}
+    exchange_vulcain_1.publish "Vulcain 1 commande moi ça stp #{count_1 += 1}",   :headers => { :vulcain => "1"}
   end
   
-  channel.queue.bind(exchange, :arguments => { 'x-match' => 'all', :dispatcher => "2"}).subscribe do |metadata, payload|
+  channel_dispatcher.queue.bind(exchange_dispatcher, :arguments => { 'x-match' => 'all', :dispatcher => "2"}).subscribe do |metadata, payload|
     puts "Dispatcher vulcain 2 received message : #{payload}"
-    exchange.publish "Vulcain 2 commande moi ça stp #{count_2 += 1}",   :headers => { :vulcain => "2"}
+    exchange_vulcain_2.publish "Vulcain 2 commande moi ça stp #{count_2 += 1}",   :headers => { :vulcain => "2"}
   end
 
-  exchange.publish "Vulcain 1 commande moi ça stp 0",   :headers => { :vulcain => "1"}
-  exchange.publish "Vulcain 2 commande moi ça stp 0",   :headers => { :vulcain => "2"}
+  exchange_vulcain_1.publish "Vulcain 1 commande moi ça stp 0",   :headers => { :vulcain => "1"}
+  exchange_vulcain_2.publish "Vulcain 2 commande moi ça stp 0",   :headers => { :vulcain => "2"}
 
   show_stopper = Proc.new do
     $stdout.puts "Stopping..."
@@ -38,5 +52,3 @@ AMQP.start(:host => "127.0.0.1", :username => "guest", :password => "guest") do 
 
   Signal.trap "INT", show_stopper
 end
-
-puts "here"
