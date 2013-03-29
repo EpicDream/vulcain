@@ -3,8 +3,8 @@ require "rubygems"
 require "amqp"
  
 IP_DISPATCHER = "127.0.0.1"
-VULCAIN_1_IP = "178.32.212.201"
-VULCAIN_2_IP = "178.32.212.201"
+VULCAIN_1_IP = "178.32.212.23"
+VULCAIN_2_IP = "178.32.210.202"
 
 AMQP.start(:host => IP_DISPATCHER, :username => "guest", :password => "guest") do |connection|
   # puts connection.inspect
