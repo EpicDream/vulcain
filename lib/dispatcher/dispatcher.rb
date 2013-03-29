@@ -21,7 +21,6 @@ AMQP.start(:host => IP_DISPATCHER, :username => "guest", :password => "guest") d
   channel_vulcain_2.on_error do |ch, channel_close|
     puts "A channel_vulcain_2-level exception: #{channel_close.inspect}"
   end
-  
 
   exchange_dispatcher = channel_dispatcher.headers("amq.match", :durable => true)
   exchange_vulcain_1 = channel_vulcain_1.headers("amq.match", :durable => true)
