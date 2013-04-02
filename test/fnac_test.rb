@@ -11,7 +11,7 @@ describe Fnac do
   end
   
   after do
-    {}`killall Google\\ Chrome` #osx
+    `killall Google\\ Chrome` #osx
   end
 
   describe "Fnac strategy" do
