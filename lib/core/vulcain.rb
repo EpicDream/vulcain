@@ -15,6 +15,7 @@ module Vulcain
   HOST = "127.0.0.1"
   
   @@dispatcher = nil
+  @@required_strategies = []
   
   def dispatcher
     return @@dispatcher if @@dispatcher
@@ -28,6 +29,13 @@ module Vulcain
   
   def spawn_new_worker id
     Worker.new(id).start
+  end
+  
+  def require_strategy vendor
+    unless @@required_strategies.include?(vendor)
+      require File.join(File.dirname(__FILE__), "../strategies/#{vendor.underscore}/#{vendor.underscore}")
+      @@required_strategies << vendor
+    end
   end
   
   extend self

@@ -4,6 +4,7 @@ module Vulcain
     
     def initialize(id)
       @id = id.to_s
+      @strategy = nil
     end
     
     def start
@@ -21,8 +22,9 @@ module Vulcain
             message = {'verb' => 'close'}
             dispatcher.publish message.to_json, :headers => { :queue => DISPATCHER_VULCAINS_QUEUE}
           when 'action'
-            puts "Vulcain perform action ..."
-            sleep(2)
+            Vulcain.require_strategy(message['vendor'])
+            @strategy = Object.const_get(message['vendor']).new(message['context']).send(message['strategy'])
+            @strategy.start
             message = {'verb' => 'ask', 'content' => 'Validez vous ?'}
             dispatcher.publish message.to_json, :headers => { :queue => DISPATCHER_VULCAINS_QUEUE}
           end
