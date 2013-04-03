@@ -65,8 +65,6 @@ AmqpRunner.start do |channel, exchange|
     when :action
       strategy = Strategy.new(dispatcher, message.session_id, message.vulcain_id)
       strategy.start
-      message = Message.new(:terminate)
-      dispatcher.publish Marshal.dump(message), :headers => { :dispatcher => "vulcains"}
     end
     
   end
