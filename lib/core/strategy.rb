@@ -1,15 +1,35 @@
 class Strategy
   
-  attr_accessor :context
+  attr_accessor :context, :exchanger
   
-  def initialize context, driver=nil, &block
-    @driver = driver || Driver.new
+  def initialize context, exchanger=nil, &block
+    @driver = Driver.new
     @block = block
     @context = context
+    @exchanger = exchanger
+    @step = 0
+    @steps = []
+  end
+  
+  def start
+    self.instance_eval(&@steps[@step])
+  end
+  
+  def next_step
+    self.instance_eval(&@steps[@step += 1])
+  end
+  
+  def step n, &block
+    @steps[n - 1] = block
   end
   
   def run
     self.instance_eval(&@block)
+    start
+  end
+  
+  def ask message
+    exchanger.publish message
   end
   
   def open_url url

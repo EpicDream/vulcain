@@ -7,4 +7,4 @@ end
 require_lib 'core/driver'
 require_lib 'core/strategy'
 
-require 'mocha'
+require 'mocha/setup'
