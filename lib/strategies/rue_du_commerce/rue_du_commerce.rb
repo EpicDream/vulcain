@@ -37,7 +37,7 @@ class RueDuCommerce
       step(1) do
         open_url URL
         click_on_if_exists SKIP
-        click_on MY_ACCOUN
+        click_on MY_ACCOUNT
         fill EMAIL_LOGIN, with:context[:user].email
         fill PASSWORD_LOGIN, with:context[:order].account_password
         click_on LOGIN_BUTTON
