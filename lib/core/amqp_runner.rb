@@ -11,7 +11,6 @@ module Vulcain
         exchange = channel.headers("amq.match", :durable => true)
 
         Signal.trap "INT" do
-          $stdout.puts "Stopping..."
           connection.close {
             EventMachine.stop { abort }
           }

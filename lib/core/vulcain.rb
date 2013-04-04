@@ -24,6 +24,10 @@ module Vulcain
     @@exchanger = channel.headers("amq.match", :durable => true)
   end
   
+  def mount_exchanger
+    exchanger
+  end
+  
   def spawn_new_worker id
     Worker.new(id).start
   end
@@ -39,7 +43,6 @@ end
 
 require_relative 'amqp_runner'
 require_relative 'worker'
-require_relative 'exchanger'
-require_relative 'self_exchanger'
+require_relative 'exchangers'
 
 Vulcain.spawn_new_worker("1")

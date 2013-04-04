@@ -73,7 +73,7 @@ end
 
 class Strategy
   LOGGED_MESSAGE = 'logged'
-  EMPTY_CART_MESSAGE = 'empty_cart'
+  EMPTIED_CART_MESSAGE = 'empty_cart'
   PRICE_KEY = 'price'
   SHIPPING_PRICE_KEY = 'shipping_price'
   TOTAL_TTC_KEY = 'total_ttc'
@@ -118,6 +118,9 @@ class Strategy
   
   def message message
     message = {'verb' => 'message', 'content' => message}
+    puts exchanger.inspect
+    puts "\n"
+    puts self_exchanger.inspect
     exchanger.publish message
     self_exchanger.publish({'verb' => 'next_step'})
   end
@@ -222,7 +225,7 @@ class RueDuCommerce
   SHIP_ACCESS_CODE = '//*[@id="content"]/form/div/div[3]/div/div[10]/input'
   COUNTRY_SELECT = '//*[@id="content"]/form/div/div[3]/div/div[14]/select'
   VALIDATE_SHIP_ADDRESS = '//*[@id="content"]/div[4]/div[2]/div/form/input[1]'
-  VAIDATE_SHIPPING = '//*[@id="btnValidContinue"]'
+  VALIDATE_SHIPPING = '//*[@id="btnValidContinue"]'
   VALIDATE_CARD_PAYMENT = '//*[@id="inpMop1"]'
   VALIDATE_VISA_CARD = '//*[@id="content"]/div/form/div[1]/input[2]'
   CREDIT_CARD_NUMBER = '//*[@id="CARD_NUMBER"]'
@@ -280,7 +283,7 @@ class RueDuCommerce
         click_on MY_CART
         click_on_all([REMOVE_PRODUCT]) { |element| element || exists?(REMOVE_PRODUCT)}
         raise unless exists? EMPTY_CART_MESSAGE
-        message Strategy::EMPTY_CART_MESSAGE
+        message Strategy::EMPTIED_CART_MESSAGE
       end
       
       step(3) do
@@ -289,7 +292,7 @@ class RueDuCommerce
         click_on ACCESS_CART
         click_on FINALIZE_ORDER
         click_on VALIDATE_SHIP_ADDRESS
-        click_on VAIDATE_SHIPPING
+        click_on VALIDATE_SHIPPING
         message = {
           Strategy::PRICE_KEY => get_text(TOTAL_ARTICLE), 
           Strategy::SHIPPING_PRICE_KEY => get_text(TOTAL_SHIPPING), 
