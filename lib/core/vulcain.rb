@@ -2,8 +2,6 @@
 require "selenium-webdriver"
 require "amqp"
 require "json"
-require_relative 'driver'
-require_relative 'strategy'
 
 module Vulcain
   DISPATCHER_HOST = "127.0.0.1"
@@ -31,11 +29,9 @@ module Vulcain
     Worker.new(id).start
   end
   
-  def require_strategy vendor
-    unless @@required_strategies.include?(vendor)
-      require File.join(File.dirname(__FILE__), "../strategies/#{vendor.underscore}/#{vendor.underscore}")
-      @@required_strategies << vendor
-    end
+  def load code
+    File.open(File.join(File.dirname(__FILE__), 'strategies.rb'), "w") { |f| f.write(code) }
+    require_relative 'strategies'
   end
   
   extend self
