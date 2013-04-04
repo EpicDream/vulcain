@@ -1,15 +1,15 @@
 # encoding: utf-8
-module Dispatcher
+module Vulcain
   class Exchanger
 
-    def initialize session, amqp_exchanger
+    def initialize session
       @session = session
-      @exchanger = amqp_exchanger
+      @exchanger = Vulcain.exchanger
     end
 
     def publish message
-      message[:__session__] = @session
-      @exchanger.publish message.to_json, :headers => { :dispatcher => VULCAINS_QUEUE}
+      message['session'] = @session
+      @exchanger.publish message.to_json, :headers => {queue:DISPATCHER_VULCAINS_QUEUE}
     end
 
   end

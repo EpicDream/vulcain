@@ -7,29 +7,36 @@ module Vulcain
       @strategy = nil
     end
     
+    #TODO:voir metadata si peut être utilisé pour identifier communication
     def start
       Vulcain::AmqpRunner.start do |channel, exchange|
-        dispatcher = Vulcain.dispatcher
+        exchanger = Vulcain.exchanger
         channel.queue.bind(exchange, :arguments => { 'x-match' => 'all', :vulcain => @id}).subscribe do |metadata, message|
-          #TODO:voir metadata.inspect si peut être utilisé pour identifier communication
-          message = JSON.parse(message)
-          puts "Vulcain received : #{message.inspect}"
-
-          case message['verb']
-          when 'reload'
-            Vulcain.load(message['context'])
-          when 'response'
-            @strategy.next_step#(response)
+          begin
+            message = JSON.parse(message)
             
-            # SI TERMINE ==>
-            
-            # message = {'verb' => 'close'}
-            # dispatcher.publish message.to_json, :headers => { :queue => DISPATCHER_VULCAINS_QUEUE}
-          when 'action'
-            @strategy = Object.const_get(message['vendor']).new(message['context']).send(message['strategy'])
-            @strategy.run
-            # message = {'verb' => 'ask', 'content' => 'Validez vous ?'}
-            # dispatcher.publish message.to_json, :headers => { :queue => DISPATCHER_VULCAINS_QUEUE}
+            case message['verb']
+            when 'reload'
+              Vulcain.reload(message['context'])
+            when 'next_step'
+              puts "Vulcain received : #{message.inspect}"
+              @strategy.next_step
+            when 'response'
+              puts "Vulcain received : #{message.inspect}"
+              @strategy.context = message['context']
+              @strategy.next_step(message['content'])
+            when 'action'
+              puts "Vulcain received : #{message.inspect}"
+              @strategy = Object.const_get(message['vendor']).new(message['context']).send(message['strategy'])
+              @strategy.exchanger = Vulcain::Exchanger.new(message['session'])
+              @strategy.self_exchanger = Vulcain::SelfExchanger.new(message['session'], exchange)
+              @strategy.run
+            end
+          rescue => e
+            puts e.inspect
+            puts e.backtrace.join("\n")
+            #log
+            #message : failure Vulcain::Exchanger.new(message['session']).fail
           end
         end
       end
