@@ -44,5 +44,6 @@ end
 require_relative 'amqp_runner'
 require_relative 'worker'
 require_relative 'exchangers'
+require_relative 'state_machine'
 
 Vulcain.spawn_new_worker("1")

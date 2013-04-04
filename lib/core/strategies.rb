@@ -118,9 +118,6 @@ class Strategy
   
   def message message
     message = {'verb' => 'message', 'content' => message}
-    puts exchanger.inspect
-    puts "\n"
-    puts self_exchanger.inspect
     exchanger.publish message
     self_exchanger.publish({'verb' => 'next_step'})
   end
