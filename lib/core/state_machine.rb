@@ -13,11 +13,11 @@ module Vulcain
         @strategy.next_step
       when 'response'
         @strategy.context = message['context']
-        @strategy.next_step(message['content'])
+        @strategy.next_step
       when 'action'
         @strategy = Object.const_get(message['vendor']).new(message['context']).send(message['strategy'])
-        @strategy.exchanger = Vulcain::Exchanger.new(message['session'])
-        @strategy.self_exchanger = Vulcain::SelfExchanger.new(message['session'], @exchange)
+        @strategy.exchanger = Vulcain::Exchanger.new(message['context']['session'])
+        @strategy.self_exchanger = Vulcain::SelfExchanger.new(message['context']['session'], @exchange)
         @strategy.run
       end
     end

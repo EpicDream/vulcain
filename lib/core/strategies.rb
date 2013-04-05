@@ -107,17 +107,17 @@ class Strategy
   end
   
   def confirm message
-    message = {'verb' => 'confirm', 'content' => message}
+    message = {'verb' => 'confirm', 'content' => message}.merge!({'session' => context['session']})
     exchanger.publish message
   end
   
   def terminate
-    message = {'verb' => 'terminate'}
+    message = {'verb' => 'terminate'}.merge!({'session' => context['session']})
     exchanger.publish message
   end
   
   def message message
-    message = {'verb' => 'message', 'content' => message}
+    message = {'verb' => 'message', 'content' => message}.merge!({'session' => context['session']})
     exchanger.publish message
     self_exchanger.publish({'verb' => 'next_step'})
   end
@@ -298,14 +298,14 @@ class RueDuCommerce
         confirm message
       end
       
-      step(4) do |response|
-        if response == Strategy::RESPONSE_OK
+      step(4) do
+        if context['response'] == Strategy::RESPONSE_OK
           click_on VALIDATE_CARD_PAYMENT
           click_on VALIDATE_VISA_CARD
-          fill CREDIT_CARD_NUMBER, with:context['order']['card_number']
-          fill CREDIT_CARD_CRYPTO, with:context['order']['card_crypto']
-          select_option CREDIT_CARD_EXPIRE_MONTH, context['order']['expire_month']
-          select_option CREDIT_CARD_EXPIRE_YEAR, context['order']['expire_year']
+          fill CREDIT_CARD_NUMBER, with:context['credentials']['card_number']
+          fill CREDIT_CARD_CRYPTO, with:context['credentials']['card_crypto']
+          select_option CREDIT_CARD_EXPIRE_MONTH, context['credentials']['expire_month']
+          select_option CREDIT_CARD_EXPIRE_YEAR, context['credentials']['expire_year']
           click_on VALIDATE_PAYMENT
         end
         terminate
