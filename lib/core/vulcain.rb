@@ -1,11 +1,7 @@
 # -*- encoding : utf-8 -*-
 require "amqp"
 require "json"
-require "headless"
 require "selenium-webdriver"
-
-headless = Headless.new
-headless.start
 
 module Vulcain
   DISPATCHER_HOST = "127.0.0.1"
