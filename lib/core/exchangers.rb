@@ -7,8 +7,8 @@ module Vulcain
       @exchanger = Vulcain.exchanger
     end
 
-    def publish message
-      message['session'] = @session
+    def publish message, session=@session
+      message['session'] = session
       @exchanger.publish message.to_json, :headers => {queue:DISPATCHER_VULCAINS_QUEUE}
     end
 
