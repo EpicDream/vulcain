@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 if defined?(Driver)
   Object.send(:remove_const, :Driver)
 end
@@ -6,8 +8,8 @@ if defined?(Strategy)
   Object.send(:remove_const, :Strategy)
 end
 
-if defined?(RueDuCommerce)
-  Object.send(:remove_const, :RueDuCommerce)
+if defined?(Amazon)
+  Object.send(:remove_const, :Amazon)
 end
 
 require "selenium-webdriver"
@@ -44,12 +46,16 @@ class Driver
   end
 
   def select_option select, value
-    options = select.find_elements(:tag_name, "option")
+    options = options_of_select(select)
     options.each do |option|
       next unless option.attribute("value") == value
       option.click
       break
     end
+  end
+  
+  def options_of_select select
+    select.find_elements(:tag_name, "option")
   end
   
   def click_on element
@@ -61,6 +67,28 @@ class Driver
     waiting { driver.find_elements(:xpath => xpath).first }
   end
   
+  def find_elements xpath
+    waiting { driver.find_elements(:xpath => xpath) }
+  end
+  
+  def find_any_element xpaths
+    waiting { 
+      xpaths.inject(nil) do |element, xpath|
+        element = driver.find_elements(:xpath => xpath).first 
+        break element if element
+        element
+      end
+    }
+  end
+  
+  def find_links_with_text text
+    waiting { driver.find_elements(:link_text => text) }
+  end
+  
+  def find_input_with_value value
+    waiting { driver.find_element(:xpath => "//input[@value='#{value}']")}
+  end
+  
   private
   
   def waiting
@@ -68,12 +96,16 @@ class Driver
       begin
         yield
       rescue => e
-        sleep(0.1) and retry
+        puts e.inspect
+        sleep(0.1) and retry #retry < 1000 times else raise
       end  
     end
   end
   
 end
+
+# encoding: utf-8
+require 'ostruct'
 
 class Strategy
   LOGGED_MESSAGE = 'logged'
@@ -82,49 +114,63 @@ class Strategy
   SHIPPING_PRICE_KEY = 'shipping_price'
   TOTAL_TTC_KEY = 'total_ttc'
   RESPONSE_OK = 'ok'
+  MESSAGES_VERBS = {:ask => 'ask', :message => 'message', :terminate => 'success'}
   
-  attr_accessor :context, :exchanger, :self_exchanger
+  attr_accessor :context, :exchanger, :self_exchanger, :driver
+  attr_accessor :account, :order, :user, :questions, :answers, :steps_options
   
   def initialize context, &block
     @driver = Driver.new
     @block = block
-    @context = context
-    @step = 0
-    @steps = []
+    self.context = context
+    @next_step = nil
+    @steps = {}
+    @steps_options = []
+    @questions = {}
+    @product_url_index = 0
+    self.instance_eval(&@block)
   end
   
   def start
-    @steps[@step].call
+    @steps['run'].call
   end
   
-  def next_step response=nil
-    @steps[@step += 1].call(response)
+  def next_step args=nil
+    @steps[@next_step].call(args)
+    @next_step = nil
   end
   
-  def step n, &block
-    @steps[n - 1] = block
+  def run_step name
+    @steps[name].call
+  end
+  
+  def step name, &block
+    @steps[name] = block
   end
   
   def run
-    self.instance_eval(&@block)
-    start
+    run_step('run')
   end
   
-  def confirm message
-    message = {'verb' => 'confirm', 'content' => message}.merge!({'session' => context['session']})
-    exchanger.publish message
-  end
-  
-  def terminate
-    message = {'verb' => 'terminate'}.merge!({'session' => context['session']})
-    @driver.quit
-    exchanger.publish message
+  def ask message, state={}
+    @next_step = state[:next_step]
+    message = {'verb' => MESSAGES_VERBS[:ask], 'content' => message}
+    exchanger.publish(message, @session)
   end
   
   def message message
-    message = {'verb' => 'message', 'content' => message}.merge!({'session' => context['session']})
-    exchanger.publish message
-    self_exchanger.publish({'verb' => 'next_step'})
+    message = {'verb' => MESSAGES_VERBS[:message], 'content' => message}
+    exchanger.publish(message, @session)
+  end
+  
+  def terminate
+    message = {'verb' => MESSAGES_VERBS[:terminate]}
+    @driver.quit
+    exchanger.publish(message, @session)
+  end
+  
+  def next_product_url
+    order.products_urls[(@product_url_index += 1) - 1]
   end
   
   def get_text xpath
@@ -137,6 +183,14 @@ class Strategy
   
   def click_on xpath
     @driver.click_on @driver.find_element(xpath)
+  end
+  
+  def click_on_links_with_text text, &block
+    elements = @driver.find_links_with_text text
+    elements.each do |element| 
+      @driver.click_on element
+      block.call if block_given?
+    end
   end
   
   def click_on_if_exists xpath
@@ -164,6 +218,19 @@ class Strategy
     end while continue
   end
   
+  def click_on_button_with_name name
+    button = @driver.find_input_with_value(name)
+    @driver.click_on button
+  end
+  
+  def find_any_element xpaths
+    @driver.find_any_element xpaths
+  end
+  
+  def find_elements xpath
+    @driver.find_elements xpath
+  end
+  
   def fill xpath, args={}
     input = @driver.find_element(xpath)
     input.clear
@@ -173,6 +240,14 @@ class Strategy
   def select_option xpath, value
     select = @driver.find_element(xpath)
     @driver.select_option(select, value)
+  end
+  
+  def options_of_select xpath
+    select = @driver.find_element(xpath)
+    options = @driver.options_of_select select
+    options.inject({}) do |options, option|
+      options.merge!({option.attribute("value") => option.text})
+    end
   end
   
   def exists? xpath
@@ -191,130 +266,230 @@ class Strategy
     @driver.accept_alert
   end
   
+  def context=context
+    @context = context
+    ['account', 'order', 'answers', 'user'].each do |ivar|
+      next unless context[ivar]
+      instance_variable_set "@#{ivar}", object_to_openstruct(context[ivar])
+    end
+    @session = context['session']
+  end
+  
+  private
+  
+  def object_to_openstruct(object)
+    case object
+    when Hash
+      object = object.clone
+      object.each do |key, value|
+        object[key] = object_to_openstruct(value)
+      end
+      OpenStruct.new(object)
+    when Array
+      object = object.clone
+      object.map! { |i| object_to_openstruct(i) }
+    else
+      object
+    end
+  end
+  
 end
-class RueDuCommerce
-  URL = 'http://www.rueducommerce.fr/home/index.htm'
-  SKIP = '//*[@id="ox-is-skip"]/img'
-  MY_ACCOUNT = '//*[@id="linkJsAccount"]/div/div[2]/span[1]'
-  EMAIL_CREATE = '//*[@id="loginNewAccEmail"]'
-  EMAIL_LOGIN = '//*[@id="loginAutEmail"]'
-  PASSWORD_LOGIN = '//*[@id="loginAutPassword"]'
-  LOGIN_BUTTON = '//*[@id="loginAutSubmit"]'
-  CREATE_ACCOUNT = '//*[@id="loginNewAccSubmit"]'
-  PASSWORD_CREATE = '//*[@id="AUT_password"]'
-  PASSWORD_CONFIRM = '//*[@id="content"]/form/div/div[2]/div/div[4]/input'
-  BIRTH_DAY = '//*[@id="content"]/form/div/div[2]/div/div[7]/select[1]'
-  BIRTH_MONTH = '//*[@id="content"]/form/div/div[2]/div/div[7]/select[2]'
-  BIRTH_YEAR = '//*[@id="content"]/form/div/div[2]/div/div[7]/select[3]'
-  PHONE = '//*[@id="content"]/form/div/div[3]/div/div[1]/input'
-  CIVILITY_M = '//*[@id="content"]/form/div/div[3]/div/div[3]/input[1]'
-  CIVILITY_MME = '//*[@id="content"]/form/div/div[3]/div/div[3]/input[2]'
-  CIVILITY_MLLE = '//*[@id="content"]/form/div/div[3]/div/div[3]/input[3]'
-  FIRSTNAME = '//*[@id="content"]/form/div/div[3]/div/div[4]/input'
-  LASTNAME = '//*[@id="content"]/form/div/div[3]/div/div[5]/input'
-  ADDRESS = '//*[@id="content"]/form/div/div[3]/div/div[6]/input'
-  ADDRESS_SUPP = '//*[@id="content"]/form/div/div[3]/div/div[7]/input'
-  POSTALCODE = '//*[@id="content"]/form/div/div[3]/div/div[12]/input'
-  CITY = '//*[@id="content"]/form/div/div[3]/div/div[13]/input'
-  VALIDATE_ACCOUNT_CREATION = '//*[@id="content"]/form/div/input'
-  ADD_TO_CART = '//*[@id="productPurchaseButton"]'
-  ACCESS_CART = '//*[@id="shopr"]/div[5]/a[2]/img'
-  MY_CART = '//*[@id="BasketLink"]/div[2]/span[1]'
-  REMOVE_PRODUCT = '//*[@id="content"]/form[3]/div[3]/div[2]/div[1]'
-  FINALIZE_ORDER = '//*[@id="FormCaddie"]/input[1]'
-  EMPTY_CART_MESSAGE = '//*[@id="content"]/div[5]'
-  COMPANY = '//*[@id="content"]/form/div/div[3]/div/div[8]/input'
-  SHIP_ACCESS_CODE = '//*[@id="content"]/form/div/div[3]/div/div[10]/input'
-  COUNTRY_SELECT = '//*[@id="content"]/form/div/div[3]/div/div[14]/select'
-  VALIDATE_SHIP_ADDRESS = '//*[@id="content"]/div[4]/div[2]/div/form/input[1]'
-  VALIDATE_SHIPPING = '//*[@id="btnValidContinue"]'
-  VALIDATE_CARD_PAYMENT = '//*[@id="inpMop1"]'
-  VALIDATE_VISA_CARD = '//*[@id="content"]/div/form/div[1]/input[2]'
-  CREDIT_CARD_NUMBER = '//*[@id="CARD_NUMBER"]'
-  CREDIT_CARD_CRYPTO = '//*[@id="CVV_KEY"]'
-  CREDIT_CARD_EXPIRE_MONTH = '//*[@id="contentSips"]/form[2]/select[1]'
-  CREDIT_CARD_EXPIRE_YEAR = '//*[@id="contentSips"]/form[2]/select[2]'
-  VALIDATE_PAYMENT = '//*[@id="contentSips"]/form[2]/input[9]'  
-  TOTAL_ARTICLE = '//*[@id="dsprecap"]/div[4]/div[2]/div[2]/span'
-  TOTAL_SHIPPING = '//*[@id="dsprecap"]/div[4]/div[2]/div[4]/span'
-  TOTAL_TTC = '//*[@id="dsprecap"]/div[4]/div[2]/div[6]/span'
+# encoding: utf-8
+
+class Amazon
+  URL = 'http://www.amazon.fr/'
+  REGISTER_URL = 'https://www.amazon.fr/ap/register?_encoding=UTF8&openid.assoc_handle=frflex&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.fr%2Fgp%2Fyourstore%2Fhome%3Fie%3DUTF8%26ref_%3Dgno_newcust'
+  REGISTER_NAME = '//*[@id="ap_customer_name"]'
+  REGISTER_EMAIL = '//*[@id="ap_email"]'
+  REGISTER_EMAIL_CONFIRMATION = '//*[@id="ap_email_check"]'
+  REGISTER_PASSWORD = '//*[@id="ap_password"]'
+  REGISTER_PASSWORD_CONFIRMATION = '//*[@id="ap_password_check"]'
+  REGISTER_SUBMIT = '//*[@id="continue"]'
+  LOGIN_BUTTON = '//*[@id="nav-your-account"]/span[1]/span/span[2]'
+  LOGIN_EMAIL = '//*[@id="ap_email"]'
+  LOGIN_PASSWORD = '//*[@id="ap_password"]'
+  LOGIN_SUBMIT = '//*[@id="signInSubmit"]'
+  UNLOG_URL = 'http://www.amazon.fr/gp/flex/sign-out.html/ref=gno_signout?ie=UTF8&action=sign-out&path=%2Fgp%2Fyourstore%2Fhome&signIn=1&useRedirectOnSuccess=1'
+  ADD_TO_CART = '//*[@id="bb_atc_button" or @id="addToCartButton"]'
+  ACCESS_CART = '//*[@id="nav-cart"]/span[1]/span/span[3]'
+  DELETE_LINK_NAME = 'Supprimer'
+  EMPTIED_CART_MESSAGE = '//*[@id="cart-active-items"]/div[2]/h3'
+  ORDER_BUTTON_NAME = 'Passer la commande'
+  ORDER_PASSWORD = '//*[@id="ap_password"]'
+  ORDER_LOGIN_SUBMIT = '//*[@id="signInSubmit"]'
+  NEW_ADDRESS_TITLE = '//*[@id="newShippingAddressFormFromIdentity"]/div[1]/div'
+  SHIPMENT_FORM_NAME = '//*[@id="enterAddressFullName"]'
+  SHIPMENT_ADDRESS_1 = '//*[@id="enterAddressAddressLine1"]'
+  SHIPMENT_ADDRESS_2 = '//*[@id="enterAddressAddressLine2"]'
+  ADDITIONAL_ADDRESS = '//*[@id="GateCode"]'
+  SHIPMENT_CITY = '//*[@id="enterAddressCity"]'
+  SHIPMENT_ZIP = '//*[@id="enterAddressPostalCode"]'
+  SHIPMENT_PHONE = '//*[@id="enterAddressPhoneNumber"]'
+  SHIPMENT_SUBMIT = '//*[@id="newShippingAddressFormFromIdentity"]/div[1]/div/form/div[6]/span/span/input'
+  SHIPMENT_CONTINUE = '//*[@id="continue"]'
+  SHIPMENT_ORIGINAL_ADDRESS_OPTION = '//*[@id="addr_0"]'
+  SHIPMENT_FACTURATION_CHOICE_SUBMIT= '//*[@id="AVS"]/div[2]/form/div/div[2]/div/div/div/span/input'
+  SHIPMENT_SEND_TO_THIS_ADDRESS = '/html/body/div[4]/div[2]/form/div/div[1]/div[2]/span/a'
+  
+  SELECT_SIZE = '//*[@id="dropdown_size_name"]'
+  SELECT_COLOR = '//*[@id="selected_color_name"]'
+  COLORS = '//div[@key="color_name"]'
+  COLOR_SELECTOR = lambda { |id| "//*[@id='color_name_#{id}']"}
+  UNAVAILABLE_COLORS = '//div[@class="swatchUnavailable"]'
+  
+  OPEN_SESSION_TITLE = '//*[@id="ap_signin1a_pagelet"]'
+  
+  attr_accessor :context, :strategy
   
   def initialize context
     @context = context
+    @strategy = instanciate_strategy
   end
   
-  def account
+  def instanciate_strategy
     Strategy.new(@context) do
-      step(1) do
-        open_url URL
-        click_on_if_exists SKIP
-        click_on MY_ACCOUNT
-        fill EMAIL_CREATE, with:context[:user].email
-        click_on CREATE_ACCOUNT
-        fill PASSWORD_CREATE, with:context[:order].account_password
-        fill PASSWORD_CONFIRM, with:context[:order].account_password
-        select_option BIRTH_DAY, context[:user].birthday.day.to_s
-        select_option BIRTH_MONTH, context[:user].birthday.month.to_s
-        select_option BIRTH_YEAR, context[:user].birthday.year.to_s
-        fill PHONE, with:context[:user].telephone
-        click_on_radio context[:user].gender, {0 => CIVILITY_M, 1 =>  CIVILITY_MME, 2 =>  CIVILITY_MLLE}
-        fill FIRSTNAME, with:context[:user].firstname
-        fill LASTNAME, with:context[:user].lastname
-        fill ADDRESS, with:context[:user].address
-        fill POSTALCODE, with:context[:user].postalcode
-        fill CITY, with:context[:user].city
-        click_on VALIDATE_ACCOUNT_CREATION
+
+      step('run') do
+        run_step('create account') if account.new_account
+        run_step('unlog')
+        run_step('login')
+        run_step('empty cart')
+        run_step('add to cart')
+        # run_step('finalize order')
+        # run_step('payment')
       end
-    end
-  end
-  
-  def order
-    Strategy.new(@context) do
       
-      step(1) do
+      step('create account') do
+        open_url REGISTER_URL
+        fill REGISTER_NAME, with:"#{user.first_name} #{user.last_name}"
+        fill REGISTER_EMAIL, with:account.login
+        fill REGISTER_EMAIL_CONFIRMATION, with:account.login
+        fill REGISTER_PASSWORD, with:account.password
+        fill REGISTER_PASSWORD_CONFIRMATION, with:account.password
+        click_on REGISTER_SUBMIT
+      end
+      
+      step('unlog') do
+        open_url UNLOG_URL
+      end
+      
+      step('login') do
         open_url URL
-        click_on_if_exists SKIP
-        click_on MY_ACCOUNT
-        fill EMAIL_LOGIN, with:context['user']['email']
-        fill PASSWORD_LOGIN, with:context['order']['account_password']
         click_on LOGIN_BUTTON
+        fill LOGIN_EMAIL, with:account.login
+        fill LOGIN_PASSWORD, with:account.password
+        click_on LOGIN_SUBMIT
         message Strategy::LOGGED_MESSAGE
       end
       
-      step(2) do
-        click_on MY_CART
-        click_on_all([REMOVE_PRODUCT]) { |element| element || exists?(REMOVE_PRODUCT)}
-        raise unless exists? EMPTY_CART_MESSAGE
+      step('size option') do
+        options = options_of_select(SELECT_SIZE)
+        options.delete_if { |value, text| value == "-1"}
+        questions.merge!({'1' => "select_option('#{SELECT_SIZE}', answer)"})
+        { :text => "Choix de la taille", :id => "1", :options => options }
+      end
+      
+      step('color option') do
+        colors = find_elements(COLORS).inject({}) do |colors, element|
+          hash = { element.attribute('count') => element.attribute('title').gsub(/Cliquez pour sélectionner /, '') }
+          colors.merge!(hash)
+        end
+        unavailable = find_elements(UNAVAILABLE_COLORS).map do |element|
+          element.attribute('id').gsub(/color_name_/, '')
+        end
+        colors.delete_if { |id, title|  unavailable.include?(id)}
+        questions.merge!({'2' => "click_on(COLOR_SELECTOR.(answer))"})
+        { :text => "Choix de la couleur", :id => "2", :options => colors }
+      end
+      
+      step('select options') do
+        if steps_options.none?
+          sleep(1)
+          click_on ADD_TO_CART
+          run_step 'add to cart'
+        else
+          message = {:questions => []}
+          question = run_step(steps_options.shift)
+          message[:questions] << question 
+          ask message, next_step:'select option'
+        end
+      end
+      
+      step('select option') do
+        raise unless answers || answers.any?
+        answers.each do |_answer|
+          answer = _answer.answer
+          action = questions[_answer.question_id]
+          eval(action)
+        end
+        run_step('select options')
+      end
+      
+      step('add to cart') do
+        if url = next_product_url
+          open_url url
+          wait_for([ADD_TO_CART])
+          steps_options << 'size option' if exists?(SELECT_SIZE)
+          steps_options << 'color option' if exists?(SELECT_COLOR)
+          
+          if steps_options.empty?
+            click_on ADD_TO_CART
+            run_step 'add to cart'
+          else
+            run_step('select options')
+          end
+          
+        end
+      end
+      
+      step('empty cart') do
+        click_on ACCESS_CART
+        click_on_links_with_text(DELETE_LINK_NAME) do
+          sleep(1)
+        end
+        click_on ACCESS_CART
+        wait_for([EMPTIED_CART_MESSAGE])
+        raise unless get_text(EMPTIED_CART_MESSAGE) =~ /panier\s+est\s+vide/i
         message Strategy::EMPTIED_CART_MESSAGE
       end
       
-      step(3) do
-        open_url context['order']['product_url']
-        click_on ADD_TO_CART
-        click_on ACCESS_CART
-        click_on FINALIZE_ORDER
-        click_on VALIDATE_SHIP_ADDRESS
-        click_on VALIDATE_SHIPPING
-        message = {
-          Strategy::PRICE_KEY => get_text(TOTAL_ARTICLE), 
-          Strategy::SHIPPING_PRICE_KEY => get_text(TOTAL_SHIPPING), 
-          Strategy::TOTAL_TTC_KEY => get_text(TOTAL_TTC)
-        }
-        confirm message
+      step('fill shipping form') do
+        fill SHIPMENT_FORM_NAME, with:"#{user.first_name} #{user.last_name}"
+        fill SHIPMENT_ADDRESS_1, with:user.address.address_1
+        fill SHIPMENT_ADDRESS_2, with:user.address.address_2
+        fill ADDITIONAL_ADDRESS, with:user.address.additionnal_address
+        fill SHIPMENT_CITY, with:user.address.city
+        fill SHIPMENT_ZIP, with:user.address.zip
+        fill SHIPMENT_PHONE, with:user.mobile_phone
+        click_on SHIPMENT_SUBMIT
+        find_any_element([SHIPMENT_CONTINUE, SHIPMENT_ORIGINAL_ADDRESS_OPTION])
+        if exists? SHIPMENT_FACTURATION_CHOICE_SUBMIT
+          click_on SHIPMENT_ORIGINAL_ADDRESS_OPTION
+          click_on SHIPMENT_FACTURATION_CHOICE_SUBMIT
+        end
       end
       
-      step(4) do
-        if context['response'] == Strategy::RESPONSE_OK
-          click_on VALIDATE_CARD_PAYMENT
-          click_on VALIDATE_VISA_CARD
-          fill CREDIT_CARD_NUMBER, with:context['credentials']['card_number']
-          fill CREDIT_CARD_CRYPTO, with:context['credentials']['card_crypto']
-          select_option CREDIT_CARD_EXPIRE_MONTH, context['credentials']['expire_month']
-          select_option CREDIT_CARD_EXPIRE_YEAR, context['credentials']['expire_year']
-          click_on VALIDATE_PAYMENT
+      step('finalize order') do
+        click_on ACCESS_CART
+        click_on_button_with_name ORDER_BUTTON_NAME
+        fill ORDER_PASSWORD, with:account.password
+        click_on ORDER_LOGIN_SUBMIT
+        wait_for [NEW_ADDRESS_TITLE]
+        if exists? SHIPMENT_SEND_TO_THIS_ADDRESS
+          click_on SHIPMENT_SEND_TO_THIS_ADDRESS
+        else
+          run_step 'fill shipping form'
         end
+        click_on SHIPMENT_CONTINUE
+      end
+      
+      step('payment') do
+        #message : prices
+        #confirm ?
         terminate
       end
+      
     end
   end
+  
 end
