@@ -9,13 +9,11 @@ module Vulcain
       case message['verb']
       when 'reload'
         Vulcain.reload(message['context'])
-      when 'next_step'
-        @strategy.next_step
-      when 'response'
+      when 'answer'
         @strategy.context = message['context']
         @strategy.next_step
-      when 'action'
-        @strategy = Object.const_get(message['vendor']).new(message['context']).send(message['strategy'])
+      when 'run'
+        @strategy = Object.const_get(message['vendor']).new(message['context']).strategy
         @strategy.exchanger = Vulcain::Exchanger.new(message['context']['session'])
         @strategy.self_exchanger = Vulcain::SelfExchanger.new(message['context']['session'], @exchange)
         @strategy.run
