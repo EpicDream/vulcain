@@ -1,3 +1,4 @@
 .DS_Store
 *.log
 lib/core/strategies.rb
+bug.html
