@@ -12,6 +12,8 @@ module Vulcain
       when 'answer'
         @strategy.context = message['context']
         @strategy.next_step
+      when 'next_step'
+        @strategy.next_step
       when 'run'
         @strategy = Object.const_get(message['vendor']).new(message['context']).strategy
         @strategy.exchanger = Vulcain::Exchanger.new(message['context']['session'])

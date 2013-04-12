@@ -21,8 +21,8 @@ module Vulcain
       @exchanger = exchanger
     end
 
-    def publish message
-      message['session'] = @session
+    def publish message, session=@session
+      message['session'] = session
       @exchanger.publish message.to_json, :headers => { :vulcain => @session['vulcain_id']}
     end
 
