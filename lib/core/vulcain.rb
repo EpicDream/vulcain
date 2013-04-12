@@ -4,13 +4,13 @@ require "json"
 require "selenium-webdriver"
 
 module Vulcain
-  DISPATCHER_HOST = "178.33.60.114"
+  DISPATCHER_HOST = "127.0.0.1"
   DISPATCHER_USER = "guest"
   DISPATCHER_PASSWORD = "guest"
   DISPATCHER_VULCAINS_QUEUE = "vulcains-queue" #DO NOT CHANGE WITHOUT CHANGE ON VULCAIN-API
   USER = "guest"
   PASSWORD = "guest"
-  HOST = "178.33.60.114"
+  HOST = "127.0.0.1"
   
   @@exchanger = nil
   

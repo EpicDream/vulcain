@@ -19,7 +19,7 @@ module Vulcain
           rescue => e
             puts e.inspect
             puts e.backtrace.join("\n")
-            #log
+            # log
             exchanger = Vulcain::Exchanger.new(message['session'])
             message = {'verb' => 'failure'}
             exchanger.publish message
