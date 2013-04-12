@@ -21,6 +21,7 @@ module Vulcain
             page_source = state_machine.strategy.driver.driver.page_source
             File.open(File.join(File.dirname(__FILE__), 'bug.html'), 'w') { |f| f.write(page_source) }
             exchanger = Vulcain::Exchanger.new(message['session'])
+            state_machine.strategy.driver.quit
             message = {'verb' => 'failure'}
             exchanger.publish message
           end
