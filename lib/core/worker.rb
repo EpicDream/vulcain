@@ -18,8 +18,8 @@ module Vulcain
           rescue => e
             puts e.inspect
             puts e.backtrace.join("\n")
-            puts state_machine.strategy.driver.page_source
-            # log
+            page_source = state_machine.strategy.driver.driver.page_source
+            File.open(File.join(File.dirname(__FILE__), 'bug.html'), 'w') { |f| f.write(page_source) }
             exchanger = Vulcain::Exchanger.new(message['session'])
             message = {'verb' => 'failure'}
             exchanger.publish message
