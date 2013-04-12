@@ -4,7 +4,6 @@ module Vulcain
     
     def initialize(id)
       @id = id.to_s
-      @strategy = nil
     end
     
     def start
@@ -19,6 +18,7 @@ module Vulcain
           rescue => e
             puts e.inspect
             puts e.backtrace.join("\n")
+            puts state_machine.strategy.driver.page_source
             # log
             exchanger = Vulcain::Exchanger.new(message['session'])
             message = {'verb' => 'failure'}

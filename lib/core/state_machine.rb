@@ -1,6 +1,8 @@
 module Vulcain
   class StateMachine
     
+    attr_reader :strategy
+    
     def initialize exchange
       @exchange = exchange
     end
