@@ -10,7 +10,8 @@ module Vulcain
       Vulcain::AmqpRunner.start do |channel, exchange|
         Vulcain.mount_exchanger
         state_machine = Vulcain::StateMachine.new(exchange)
-        $stdout << "Hello you, i'm Vulcain number #{@id} and i'm started !"
+        $stdout << "Hello you, i'm Vulcain number #{@id} and i'm started !\n"
+        
         channel.queue.bind(exchange, :arguments => { 'x-match' => 'all', :vulcain => @id}).subscribe do |metadata, message|
           begin
             message = JSON.parse(message)

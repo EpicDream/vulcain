@@ -11,6 +11,7 @@ module Vulcain
       case message['verb']
       when 'reload'
         Vulcain.reload(message['context'])
+        $stdout << "Ouch ! My code has been hot reloaded. Ready !\n"
       when 'answer'
         @strategy.context = message['context']
         @strategy.next_step
