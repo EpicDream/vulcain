@@ -13,7 +13,6 @@ module Vulcain
         Signal.trap "INT" do
           connection.close {
             EventMachine.stop { abort }
-            $selenium_headless_runner.destroy
           }
         end
       

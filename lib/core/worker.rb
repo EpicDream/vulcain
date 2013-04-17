@@ -12,17 +12,19 @@ module Vulcain
         state_machine = Vulcain::StateMachine.new(exchange)
         $stdout << "Hello you, i'm Vulcain number #{@id} and i'm started !\n"
         
-        channel.queue.bind(exchange, :arguments => { 'x-match' => 'all', :queue => "vulcain-#{@id}").subscribe do |metadata, message|
+        channel.queue.bind(exchange, :arguments => { 'x-match' => 'all', :queue => "vulcain-#{@id}"}).subscribe do |metadata, message|
           begin
             message = JSON.parse(message)
             state_machine.handle(message)
           rescue => e
-            strategy = state_machine.strategy
-            strategy.logging_exchanger.publish({screenshot:strategy.driver.screenshot_as(:base64)})
-            strategy.logging_exchanger.publish({page_source:strategy.driver.driver.page_source})
-            strategy.logging_exchanger.publish({error_message:e.inspect})
-            strategy.logging_exchanger.publish({error_message:e.backtrace.join("\n")})
-            strategy.driver.quit
+            raise unless state_machine
+            exchanger = state_machine.strategy.logging_exchanger
+            driver = state_machine.strategy.driver
+            exchanger.publish({screenshot:driver.screenshot})
+            exchanger.publish({page_source:driver.page_source})
+            exchanger.publish({error_message:e.inspect})
+            exchanger.publish({error_message:e.backtrace.join("\n")})
+            driver.quit
           end
         end
       end

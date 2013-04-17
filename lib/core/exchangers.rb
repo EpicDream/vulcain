@@ -22,7 +22,7 @@ module Vulcain
 
   end
   
-  class LoggingExchanger
+  class LoggingExchanger < Exchanger
 
     def initialize session
       super(session, Vulcain.exchanger, LOGGING_QUEUE)
@@ -30,10 +30,10 @@ module Vulcain
 
   end
   
-  class SelfExchanger
+  class SelfExchanger < Exchanger
 
     def initialize session, exchanger
-      super(session, exchanger, "vulcain#{session['vulcain_id']}")
+      super(session, exchanger, VULCAIN_QUEUE.(session['vulcain_id']))
     end
 
   end
