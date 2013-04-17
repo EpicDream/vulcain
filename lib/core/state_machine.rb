@@ -18,9 +18,11 @@ module Vulcain
       when 'next_step'
         @strategy.next_step
       when 'run'
+        session = message['context']['session']
         @strategy = Object.const_get(message['vendor']).new(message['context']).strategy
-        @strategy.exchanger = Vulcain::Exchanger.new(message['context']['session'])
-        @strategy.self_exchanger = Vulcain::SelfExchanger.new(message['context']['session'], @exchange)
+        @strategy.exchanger = Vulcain::DispatcherExchanger.new(session)
+        @strategy.self_exchanger = Vulcain::SelfExchanger.new(session, @exchange)
+        @strategy.logging_exchanger = Vulcain::LoggingExchanger.new(session)
         @strategy.run
       end
     end
