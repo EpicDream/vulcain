@@ -7,6 +7,14 @@ module Vulcain
       @exchange = exchange
     end
     
+    def initialize_strategy_from message
+      session = message['context']['session']
+      @strategy = Object.const_get(message['vendor']).new(message['context']).strategy
+      @strategy.exchanger = Vulcain::DispatcherExchanger.new(session)
+      @strategy.self_exchanger = Vulcain::SelfExchanger.new(session, @exchange)
+      @strategy.logging_exchanger = Vulcain::LoggingExchanger.new(session)
+    end
+    
     def handle message
       case message['verb']
       when 'reload'
@@ -18,9 +26,7 @@ module Vulcain
       when 'next_step'
         @strategy.next_step
       when 'run'
-        @strategy = Object.const_get(message['vendor']).new(message['context']).strategy
-        @strategy.exchanger = Vulcain::Exchanger.new(message['context']['session'])
-        @strategy.self_exchanger = Vulcain::SelfExchanger.new(message['context']['session'], @exchange)
+        initialize_strategy_from(message)
         @strategy.run
       end
     end

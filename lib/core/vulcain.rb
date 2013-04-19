@@ -8,6 +8,8 @@ module Vulcain
   DISPATCHER_USER = "guest"
   DISPATCHER_PASSWORD = "guest"
   DISPATCHER_VULCAINS_QUEUE = "vulcains-queue" #DO NOT CHANGE WITHOUT CHANGE ON VULCAIN-API
+  LOGGING_QUEUE = "logging-queue" #DO NOT CHANGE WITHOUT CHANGE ON VULCAIN
+  VULCAIN_QUEUE = lambda { |vulcain_id| "vulcain-#{vulcain_id}" }
   USER = "guest"
   PASSWORD = "guest"
   HOST = "127.0.0.1"

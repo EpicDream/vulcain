@@ -1,29 +1,39 @@
 # encoding: utf-8
 module Vulcain
+  
   class Exchanger
-
-    def initialize session
+    def initialize session, exchanger, queue
       @session = session
-      @exchanger = Vulcain.exchanger
+      @exchanger = exchanger
+      @queue = queue
     end
-
+    
     def publish message, session=@session
       message['session'] = session
-      @exchanger.publish message.to_json, :headers => {queue:DISPATCHER_VULCAINS_QUEUE}
+      @exchanger.publish message.to_json, :headers => {queue:@queue}
+    end
+  end
+  
+  class DispatcherExchanger < Exchanger
+
+    def initialize session
+      super(session, Vulcain.exchanger, DISPATCHER_VULCAINS_QUEUE)
     end
 
   end
   
-  class SelfExchanger
+  class LoggingExchanger < Exchanger
 
-    def initialize session, exchanger
-      @session = session
-      @exchanger = exchanger
+    def initialize session
+      super(session, Vulcain.exchanger, LOGGING_QUEUE)
     end
 
-    def publish message, session=@session
-      message['session'] = session
-      @exchanger.publish message.to_json, :headers => { :vulcain => @session['vulcain_id']}
+  end
+  
+  class SelfExchanger < Exchanger
+
+    def initialize session, exchanger
+      super(session, exchanger, VULCAIN_QUEUE.(session['vulcain_id']))
     end
 
   end
