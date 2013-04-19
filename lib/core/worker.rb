@@ -17,14 +17,16 @@ module Vulcain
             message = JSON.parse(message)
             state_machine.handle(message)
           rescue => e
-            raise unless state_machine
-            exchanger = state_machine.strategy.logging_exchanger
-            driver = state_machine.strategy.driver
-            exchanger.publish({screenshot:driver.screenshot})
-            exchanger.publish({page_source:driver.page_source})
-            exchanger.publish({error_message:e.inspect})
-            exchanger.publish({error_message:e.backtrace.join("\n")})
-            driver.quit
+            session = message['context']['session'] if message
+            exchanger = LoggingExchanger.new(session)
+            if state_machine && state_machine.strategy
+              driver = state_machine.strategy.driver
+              exchanger.publish({ screenshot:driver.screenshot })
+              exchanger.publish({ page_source:driver.page_source })
+              driver.quit
+            end
+            exchanger.publish({ error_message:e.inspect })
+            exchanger.publish({ stack_trace:e.backtrace.join("\n") })
           end
         end
       end
