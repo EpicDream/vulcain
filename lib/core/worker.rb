@@ -12,7 +12,7 @@ module Vulcain
         state_machine = Vulcain::StateMachine.new(exchange)
         $stdout << "Hello you, i'm Vulcain number #{@id} and i'm started !\n"
         
-        channel.queue.bind(exchange, :arguments => { 'x-match' => 'all', :queue => "vulcain-#{@id}"}).subscribe do |metadata, message|
+        channel.queue.bind(exchange, :arguments => { 'x-match' => 'all', :queue => VULCAIN_QUEUE.(@id)}).subscribe do |metadata, message|
           begin
             message = JSON.parse(message)
             state_machine.handle(message)
