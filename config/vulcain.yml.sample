@@ -1,0 +1,7 @@
+user: "guest"
+password: "guest"
+host: "127.0.0.1"
+dispatcher:
+  user: "guest"
+  password: "guest"
+  host: "127.0.0.1"
