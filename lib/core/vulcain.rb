@@ -9,16 +9,15 @@ module Vulcain
   LOGGING_QUEUE = "logging-queue" #DO NOT CHANGE WITHOUT CHANGE ON VULCAIN-API
   VULCAIN_QUEUE = lambda { |vulcain_id| "vulcain-#{vulcain_id}" }
   CONFIG = YAML.load_file File.join(File.dirname(__FILE__), '../../config/vulcain.yml')
-  @@exchanger = nil
+  PROCESS_NAME = "vulcain.worker.sh"
   
+  @@exchanger = nil
+
   def exchanger
     return @@exchanger if @@exchanger
-    config = CONFIG['dispatcher']
-    connection = AMQP::Session.connect(host:config['host'], username:config['user'], password:config['password'])
+    connection = AMQP::Session.connect(configuration)
     channel = AMQP::Channel.new(connection)
-    channel.on_error do |channel, channel_close|
-      raise "Can't open channel to dispatcher MQ on #{DISPATCHER_HOST}"
-    end
+    channel.on_error(&channel_error_handler)
     @@exchanger = channel.headers("amq.match", :durable => true)
   end
   
@@ -26,14 +25,29 @@ module Vulcain
     exchanger
   end
   
-  def spawn_new_worker id
-    Worker.new(id).start
+  def spawn_new_worker
+    Worker.new(next_vulcain_id).start
   end
   
   def reload code
     path = File.join(File.dirname(__FILE__), 'strategies.rb')
     File.open(path, "w") { |f| f.write(code) }
     load path
+  end
+  
+  def next_vulcain_id
+    "#{CONFIG['host']}-#{Process.pid}"
+  end
+  
+  def configuration
+    config = CONFIG['dispatcher']
+    { host:config['host'], username:config['user'], password:config['password'] }
+  end
+  
+  def channel_error_handler
+    Proc.new do |channel, channel_close|
+      raise "Can't open channel to dispatcher MQ on #{CONFIG['dispatcher']['host']}"
+    end
   end
   
   extend self

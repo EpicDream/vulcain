@@ -3,8 +3,9 @@ module Vulcain
     
     attr_reader :strategy
     
-    def initialize exchange
+    def initialize exchange, id
       @exchange = exchange
+      @id = id
     end
     
     def initialize_strategy_from message
@@ -19,6 +20,7 @@ module Vulcain
       case message['verb']
       when 'reload'
         Vulcain.reload(message['context'])
+        Vulcain::DispatcherExchanger.new(nil).publish({:verb => 'reloaded', id:@id})
         $stdout << "Ouch ! My code has been hot reloaded. Ready !\n"
       when 'answer'
         @strategy.context = message['context']
