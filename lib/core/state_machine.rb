@@ -1,7 +1,7 @@
 module Vulcain
   class StateMachine
     
-    attr_reader :strategy
+    attr_reader :strategy, :session
     
     def initialize exchange, id
       @exchange = exchange
@@ -9,7 +9,7 @@ module Vulcain
     end
     
     def initialize_strategy_from message
-      session = message['context']['session']
+      @session = message['context']['session']
       @strategy = Object.const_get(message['vendor']).new(message['context']).strategy
       @strategy.exchanger = Vulcain::DispatcherExchanger.new(session)
       @strategy.self_exchanger = Vulcain::SelfExchanger.new(session, @exchange)

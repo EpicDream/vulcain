@@ -17,8 +17,7 @@ module Vulcain
             message = JSON.parse(message)
             state_machine.handle(message)
           rescue => e
-            #state_machine.handle_failure
-            session = message['context']['session'] if message
+            session = state_machine.session if state_machine
             exchanger = LoggingExchanger.new(session)
             if state_machine && state_machine.strategy
               driver = state_machine.strategy.driver
