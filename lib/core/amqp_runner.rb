@@ -3,18 +3,15 @@ module Vulcain
   class AmqpRunner
     
     def self.start
-      AMQP.start(host:Vulcain::HOST, username:Vulcain::USER, password:Vulcain::PASSWORD) do |connection|
+      AMQP.start(host:CONFIG['host'], username:CONFIG['user'], password:CONFIG['password']) do |connection|
         channel = AMQP::Channel.new(connection)
         channel.on_error do |channel, channel_close| 
-          raise "Can't open channel to local vulcain MQ server on #{HOST}"
+          raise "Can't open channel to local vulcain MQ server on #{CONFIG['host']}"
         end
         exchange = channel.headers("amq.match", :durable => true)
 
         Signal.trap "INT" do
-          connection.close {
-            EventMachine.stop { abort }
-            $selenium_headless_runner.destroy
-          }
+          connection.close { EventMachine.stop { abort }}
         end
       
         yield channel, exchange

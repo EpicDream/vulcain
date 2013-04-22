@@ -2,3 +2,4 @@
 *.log
 lib/core/strategies.rb
 bug.html
+config/vulcain.yml

@@ -10,20 +10,23 @@ module Vulcain
       Vulcain::AmqpRunner.start do |channel, exchange|
         Vulcain.mount_exchanger
         state_machine = Vulcain::StateMachine.new(exchange)
-
-        channel.queue.bind(exchange, :arguments => { 'x-match' => 'all', :vulcain => @id}).subscribe do |metadata, message|
+        $stdout << "Hello you, i'm Vulcain number #{@id} and i'm started !\n"
+        
+        channel.queue.bind(exchange, :arguments => { 'x-match' => 'all', :queue => VULCAIN_QUEUE.(@id)}).subscribe do |metadata, message|
           begin
             message = JSON.parse(message)
             state_machine.handle(message)
           rescue => e
-            puts e.inspect
-            puts e.backtrace.join("\n")
-            page_source = state_machine.strategy.driver.driver.page_source
-            File.open(File.join(File.dirname(__FILE__), 'bug.html'), 'w') { |f| f.write(page_source) }
-            exchanger = Vulcain::Exchanger.new(message['session'])
-            state_machine.strategy.driver.quit
-            message = {'verb' => 'failure'}
-            exchanger.publish message
+            session = message['context']['session'] if message
+            exchanger = LoggingExchanger.new(session)
+            if state_machine && state_machine.strategy
+              driver = state_machine.strategy.driver
+              exchanger.publish({ screenshot:driver.screenshot })
+              exchanger.publish({ page_source:driver.page_source })
+              driver.quit
+            end
+            exchanger.publish({ error_message:e.inspect })
+            exchanger.publish({ stack_trace:e.backtrace.join("\n") })
           end
         end
       end
