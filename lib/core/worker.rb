@@ -8,15 +8,16 @@ module Vulcain
     
     def start
       Vulcain::AmqpRunner.start do |channel, exchange|
-        Vulcain.mount_exchanger
-        state_machine = Vulcain::StateMachine.new(exchange)
-        $stdout << "Hello you, i'm Vulcain number #{@id} and i'm started !\n"
+        state_machine = Vulcain::StateMachine.new(exchange, @id)
+        $stdout << "I'm Vulcain number #{@id} and i'm started !\n"
+        Vulcain::AdminExchanger.new({vulcain_id:@id}).publish({:status => MESSAGES_STATUSES[:started]})
         
         channel.queue.bind(exchange, :arguments => { 'x-match' => 'all', :queue => VULCAIN_QUEUE.(@id)}).subscribe do |metadata, message|
           begin
             message = JSON.parse(message)
             state_machine.handle(message)
           rescue => e
+            #state_machine.handle_failure
             session = message['context']['session'] if message
             exchanger = LoggingExchanger.new(session)
             if state_machine && state_machine.strategy

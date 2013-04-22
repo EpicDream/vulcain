@@ -9,7 +9,7 @@ module Vulcain
           raise "Can't open channel to local vulcain MQ server on #{CONFIG['host']}"
         end
         exchange = channel.headers("amq.match", :durable => true)
-
+        
         Signal.trap "INT" do
           connection.close { EventMachine.stop { abort }}
         end
