@@ -18,9 +18,9 @@ module Vulcain
     
     def handle message
       case message['verb']
-      when 'reload'
-        Vulcain.reload(message['context'])
-        Vulcain::DispatcherExchanger.new(nil).publish({:verb => 'reloaded', id:@id})
+      when MESSAGES_VERBS[:reload]
+        Vulcain.reload(message['code'])
+        Vulcain::AdminExchanger.new({vulcain_id:@id}).publish({status:MESSAGES_STATUSES[:reloaded]})
         $stdout << "Ouch ! My code has been hot reloaded. Ready !\n"
       when 'answer'
         @strategy.context = message['context']
