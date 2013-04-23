@@ -14,7 +14,9 @@ module Vulcain
   CONFIG = YAML.load_file File.join(File.dirname(__FILE__), '../../config/vulcain.yml')
   PROCESS_NAME = "vulcain.worker.sh"
   MESSAGES_VERBS = {:reload => 'reload'}
-  MESSAGES_STATUSES = {:started => 'started', :reloaded => 'reloaded'}
+  ADMIN_MESSAGES_STATUSES = {
+    started:'started', reloaded:'reloaded', abort:'abort', failure:'failure', terminate:'terminate'
+  }
   
   def spawn_new_worker
     Worker.new(vid).start
