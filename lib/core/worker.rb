@@ -19,7 +19,7 @@ module Vulcain
           rescue => e
             session = state_machine.session if state_machine
             if session
-              message = {'verb' => MESSAGES_VERBS[:failure], 'content' => {message:'global rescue'}}
+              message = {'verb' => MESSAGES_VERBS[:failure], 'content' => {status:'exception'}}
               DispatcherExchanger.new(session).publish(message)
             end
             exchanger = LoggingExchanger.new(session)
