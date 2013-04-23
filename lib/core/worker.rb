@@ -18,11 +18,17 @@ module Vulcain
             state_machine.handle(message)
           rescue => e
             session = state_machine.session if state_machine
+            if session
+              message = {'verb' => MESSAGES_VERBS[:failure], 'content' => {message:'global rescue'}}
+              DispatcherExchanger.new(session).publish(message)
+            end
             exchanger = LoggingExchanger.new(session)
             if state_machine && state_machine.strategy
               driver = state_machine.strategy.driver
               exchanger.publish({ screenshot:driver.screenshot })
               exchanger.publish({ page_source:driver.page_source })
+              
+              
               driver.quit
             end
             AdminExchanger.new({vulcain_id:@id}).publish({status:ADMIN_MESSAGES_STATUSES[:failure]})
