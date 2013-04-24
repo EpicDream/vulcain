@@ -18,6 +18,8 @@ module Vulcain
     
     def handle message
       case message['verb']
+      when MESSAGES_VERBS[:ping]
+        Vulcain::AdminExchanger.new({vulcain_id:@id}).publish({status:ADMIN_MESSAGES_STATUSES[:ack_ping]})
       when MESSAGES_VERBS[:reload]
         Vulcain.reload(message['code'])
         Vulcain::AdminExchanger.new({vulcain_id:@id}).publish({status:ADMIN_MESSAGES_STATUSES[:reloaded]})

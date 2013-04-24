@@ -13,9 +13,10 @@ module Vulcain
   VULCAIN_QUEUE = lambda { |vulcain_id| "vulcain-#{vulcain_id}" }
   CONFIG = YAML.load_file File.join(File.dirname(__FILE__), '../../config/vulcain.yml')
   PROCESS_NAME = "vulcain.worker.sh"
-  MESSAGES_VERBS = {:reload => 'reload', :failure => 'failure'}
+  MESSAGES_VERBS = {reload:'reload', failure:'failure', ping:'ping'}
   ADMIN_MESSAGES_STATUSES = {
-    started:'started', reloaded:'reloaded', abort:'abort', failure:'failure', terminate:'terminate'
+    started:'started', reloaded:'reloaded', abort:'abort', failure:'failure', terminate:'terminate',
+    ack_ping:'ack_ping'
   }
   
   def spawn_new_worker
