@@ -24,7 +24,7 @@ module Vulcain
   end
   
   def reload code
-    path = File.join(File.dirname(__FILE__), 'strategies.rb')
+    path = File.join(File.dirname(__FILE__), 'robots.rb')
     File.open(path, "w") { |f| f.write(code) }
     load path
   end

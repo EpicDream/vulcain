@@ -52,7 +52,6 @@ module Vulcain
 
   end
   
-  
   class LoggingExchanger < Exchanger
 
     def initialize session

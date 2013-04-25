@@ -1,5 +1,5 @@
 .DS_Store
 *.log
-lib/core/strategies.rb
+lib/core/robots.rb
 bug.html
 config/vulcain.yml
