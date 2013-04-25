@@ -11,7 +11,7 @@ module Vulcain
         exchange = channel.headers("amq.headers", :durable => true)
         
         Signal.trap "INT" do
-          AdminExchanger.new({vulcain_id:vulcain_id}).publish({status:ADMIN_MESSAGES_STATUSES[:abort]})
+          AdminExchanger.new({vulcain_id:vulcain_id}).publish({status:ADMIN_MESSAGES_STATUSES[:aborted]})
           connection.close { EventMachine.stop { abort }}
         end
       

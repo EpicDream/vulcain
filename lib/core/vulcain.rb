@@ -15,7 +15,7 @@ module Vulcain
   PROCESS_NAME = "vulcain.worker.sh"
   MESSAGES_VERBS = {reload:'reload', failure:'failure', ping:'ping'}
   ADMIN_MESSAGES_STATUSES = {
-    started:'started', reloaded:'reloaded', abort:'abort', failure:'failure', terminate:'terminate',
+    started:'started', reloaded:'reloaded', aborted:'aborted', failure:'failure', terminated:'terminated',
     ack_ping:'ack_ping'
   }
   

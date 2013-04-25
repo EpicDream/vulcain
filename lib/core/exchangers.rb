@@ -12,7 +12,7 @@ module Vulcain
     
     def publish message, session=@session
       message['session'] = session
-      @exchanger.publish message.to_json, :headers => {queue:@queue}
+      @exchanger.publish message.to_json, :headers => { queue:@queue }
     end
     
     def dispatcher_exchanger
