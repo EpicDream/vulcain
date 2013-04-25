@@ -1,19 +1,19 @@
 module Vulcain
   class StateMachine
     
-    attr_reader :strategy, :session
+    attr_reader :robot, :session
     
     def initialize exchange, id
       @exchange = exchange
       @id = id
     end
     
-    def initialize_strategy_from message
+    def initialize_robot_from message
       @session = message['context']['session']
-      @strategy = Object.const_get(message['vendor']).new(message['context']).strategy
-      @strategy.exchanger = Vulcain::DispatcherExchanger.new(session)
-      @strategy.self_exchanger = Vulcain::SelfExchanger.new(session, @exchange)
-      @strategy.logging_exchanger = Vulcain::LoggingExchanger.new(session)
+      @robot = Object.const_get(message['vendor']).new(message['context']).robot
+      @robot.exchanger = Vulcain::DispatcherExchanger.new(session)
+      @robot.self_exchanger = Vulcain::SelfExchanger.new(session, @exchange)
+      @robot.logging_exchanger = Vulcain::LoggingExchanger.new(session)
     end
     
     def handle message
@@ -25,13 +25,13 @@ module Vulcain
         Vulcain::AdminExchanger.new({vulcain_id:@id}).publish({status:ADMIN_MESSAGES_STATUSES[:reloaded]})
         $stdout << "Ouch ! My code has been hot reloaded. Ready !\n"
       when 'answer'
-        @strategy.context = message['context']
-        @strategy.next_step
+        @robot.context = message['context']
+        @robot.next_step
       when 'next_step'
-        @strategy.next_step
+        @robot.next_step
       when 'run'
-        initialize_strategy_from(message)
-        @strategy.run
+        initialize_robot_from(message)
+        @robot.run
       end
     end
     

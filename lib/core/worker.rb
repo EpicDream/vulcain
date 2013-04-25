@@ -23,8 +23,8 @@ module Vulcain
               DispatcherExchanger.new(session).publish(message)
             end
             exchanger = LoggingExchanger.new(session)
-            if state_machine && state_machine.strategy
-              driver = state_machine.strategy.driver
+            if state_machine && state_machine.robot
+              driver = state_machine.robot.driver
               exchanger.publish({ screenshot:driver.screenshot })
               exchanger.publish({ page_source:driver.page_source })
               
