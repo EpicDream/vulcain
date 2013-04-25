@@ -8,7 +8,7 @@ module Vulcain
         channel.on_error do |channel, channel_close| 
           raise "Can't open channel to local vulcain MQ server on #{CONFIG['host']}"
         end
-        exchange = channel.headers("amq.match", :durable => true)
+        exchange = channel.headers("amq.headers", :durable => true)
         
         Signal.trap "INT" do
           AdminExchanger.new({vulcain_id:vulcain_id}).publish({status:ADMIN_MESSAGES_STATUSES[:abort]})
