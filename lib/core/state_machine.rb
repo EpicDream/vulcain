@@ -15,9 +15,9 @@ module Vulcain
     
     def handle message
       case message['verb']
-      when MESSAGES_VERBS[:ping]
+      when Messager::MESSAGES_VERBS[:ping]
         @messager.admin.message(:ack_ping)
-      when MESSAGES_VERBS[:reload]
+      when Messager::MESSAGES_VERBS[:reload]
         Vulcain.reload(message['code'])
         @messager.admin.message(:reloaded)
         $stdout << "Ouch ! My code has been hot reloaded. Ready !\n"

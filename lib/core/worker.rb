@@ -20,20 +20,16 @@ module Vulcain
             message = JSON.parse(message)
             @state_machine.handle(message)
           rescue => e
-            session = @state_machine.session if @state_machine
-            if session
-              @messager.session = session
-              @messager.dispatcher.message(:failure, { status:'exception'})
-            end
+            @messager.dispatcher.message(:failure, { status:'exception'})
             if @state_machine && @state_machine.robot
               driver = @state_machine.robot.driver
-              @message.logging.message(:screenshot, driver.screenshot)
-              @message.logging.message(:page_source, driver.page_source)
+              @messager.logging.message(:screenshot, driver.screenshot)
+              @messager.logging.message(:page_source, driver.page_source)
               driver.quit
             end
             @messager.admin.message(:failure)
-            @message.logging.message(:error_message, e.inspect)
-            @message.logging.message(:stack_trace, e.backtrace.join("\n"))
+            @messager.logging.message(:error_message, e.inspect)
+            @messager.logging.message(:stack_trace, e.backtrace.join("\n"))
           end
         end
       end

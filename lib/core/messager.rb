@@ -1,5 +1,13 @@
 module Vulcain
   class Messager
+    MESSAGES_VERBS = { reload:'reload', failure:'failure', ping:'ping',
+      :ask => 'ask', :message => 'message', :terminate => 'success', :next_step => 'next_step',
+      :assess => 'assess', :logging => 'logging'
+      }
+    ADMIN_MESSAGES_STATUSES = {
+      started:'started', reloaded:'reloaded', aborted:'aborted', failure:'failure', terminated:'terminated',
+      ack_ping:'ack_ping'
+    }
     
     attr_accessor :session
     
