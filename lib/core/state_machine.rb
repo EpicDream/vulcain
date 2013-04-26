@@ -1,28 +1,33 @@
 module Vulcain
   class StateMachine
     
-    attr_reader :robot, :session
+    attr_reader :robot#, :session
     
-    def initialize exchange, id
-      @exchange = exchange
-      @id = id
+    def initialize #exchange, id
+      # @exchange = exchange
+      # @id = id
+      # @admin_exchanger = Vulcain::AdminExchanger.new({vulcain_id:@id})
+      @messager = Vulcain.messager
     end
     
     def initialize_robot_from message
-      @session = message['context']['session']
+      @messager.session = message['context']['session']
       @robot = Object.const_get(message['vendor']).new(message['context']).robot
-      @robot.exchanger = Vulcain::DispatcherExchanger.new(session)
-      @robot.self_exchanger = Vulcain::SelfExchanger.new(session, @exchange)
-      @robot.logging_exchanger = Vulcain::LoggingExchanger.new(session)
+      @robot.messager = @messager
+      # @robot.exchanger = Vulcain::DispatcherExchanger.new(session)
+      # @robot.self_exchanger = Vulcain::SelfExchanger.new(session, @exchange)
+      # @robot.logging_exchanger = Vulcain::LoggingExchanger.new(session)
     end
     
     def handle message
       case message['verb']
       when MESSAGES_VERBS[:ping]
-        Vulcain::AdminExchanger.new({vulcain_id:@id}).publish({status:ADMIN_MESSAGES_STATUSES[:ack_ping]})
+        @messager.admin.message(:ack_ping)
+        # @admin_exchanger.publish({status:ADMIN_MESSAGES_STATUSES[:ack_ping]})
       when MESSAGES_VERBS[:reload]
         Vulcain.reload(message['code'])
-        Vulcain::AdminExchanger.new({vulcain_id:@id}).publish({status:ADMIN_MESSAGES_STATUSES[:reloaded]})
+        @messager.admin.message(:reloaded)
+        # @admin_exchanger.publish({status:ADMIN_MESSAGES_STATUSES[:reloaded]})
         $stdout << "Ouch ! My code has been hot reloaded. Ready !\n"
       when 'answer'
         @robot.context = message['context']
