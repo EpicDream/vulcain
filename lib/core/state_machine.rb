@@ -1,35 +1,34 @@
 module Vulcain
   class StateMachine
     
-    attr_reader :strategy, :session
+    attr_reader :robot
     
-    def initialize exchange, id
-      @exchange = exchange
-      @id = id
+    def initialize
+      @messager = Vulcain.messager
     end
     
-    def initialize_strategy_from message
-      @session = message['context']['session']
-      @strategy = Object.const_get(message['vendor']).new(message['context']).strategy
-      @strategy.exchanger = Vulcain::DispatcherExchanger.new(session)
-      @strategy.self_exchanger = Vulcain::SelfExchanger.new(session, @exchange)
-      @strategy.logging_exchanger = Vulcain::LoggingExchanger.new(session)
+    def initialize_robot_from message
+      @messager.session = message['context']['session']
+      @robot = Object.const_get(message['vendor']).new(message['context']).robot
+      @robot.messager = @messager
     end
     
     def handle message
       case message['verb']
-      when MESSAGES_VERBS[:reload]
+      when Messager::MESSAGES_VERBS[:ping]
+        @messager.admin.message(:ack_ping)
+      when Messager::MESSAGES_VERBS[:reload]
         Vulcain.reload(message['code'])
-        Vulcain::AdminExchanger.new({vulcain_id:@id}).publish({status:ADMIN_MESSAGES_STATUSES[:reloaded]})
+        @messager.admin.message(:reloaded)
         $stdout << "Ouch ! My code has been hot reloaded. Ready !\n"
       when 'answer'
-        @strategy.context = message['context']
-        @strategy.next_step
+        @robot.context = message['context']
+        @robot.next_step
       when 'next_step'
-        @strategy.next_step
+        @robot.next_step
       when 'run'
-        initialize_strategy_from(message)
-        @strategy.run
+        initialize_robot_from(message)
+        @robot.run
       end
     end
     

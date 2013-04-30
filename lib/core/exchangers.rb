@@ -4,15 +4,14 @@ module Vulcain
   class Exchanger
     @@exchanger = nil
     
-    def initialize session, queue, exchanger=dispatcher_exchanger
-      @session = session
+    def initialize queue, exchanger=dispatcher_exchanger
       @exchanger = exchanger 
       @queue = queue
     end
     
-    def publish message, session=@session
+    def publish message, session
       message['session'] = session
-      @exchanger.publish message.to_json, :headers => {queue:@queue}
+      @exchanger.publish message.to_json, :headers => { queue:@queue }
     end
     
     def dispatcher_exchanger
@@ -20,7 +19,7 @@ module Vulcain
       connection = AMQP::Session.connect(configuration)
       channel = AMQP::Channel.new(connection)
       channel.on_error(&channel_error_handler)
-      @@exchanger = channel.headers("amq.match", :durable => true)
+      @@exchanger = channel.headers("amq.headers", :durable => true)
     end
     
     def configuration
@@ -38,33 +37,32 @@ module Vulcain
   
   class DispatcherExchanger < Exchanger
 
-    def initialize session
-      super(session, DISPATCHER_VULCAINS_QUEUE)
+    def initialize
+      super DISPATCHER_VULCAINS_QUEUE
     end
 
   end
   
   class AdminExchanger < Exchanger
 
-    def initialize session
-      super(session, ADMIN_QUEUE)
+    def initialize
+      super ADMIN_QUEUE
     end
 
   end
   
-  
   class LoggingExchanger < Exchanger
 
-    def initialize session
-      super(session, LOGGING_QUEUE)
+    def initialize
+      super LOGGING_QUEUE
     end
 
   end
   
   class SelfExchanger < Exchanger
 
-    def initialize session, exchanger
-      super(session, VULCAIN_QUEUE.(session['vulcain_id']), exchanger)
+    def initialize vulcain_id, exchanger
+      super VULCAIN_QUEUE.(vulcain_id), exchanger
     end
 
   end
