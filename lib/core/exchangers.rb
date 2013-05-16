@@ -19,7 +19,7 @@ module Vulcain
       connection = AMQP::Session.connect(configuration)
       channel = AMQP::Channel.new(connection)
       channel.on_error(&channel_error_handler)
-      @@exchanger = channel.headers("amq.headers", :durable => true)
+      @@exchanger = channel.headers("amqp.headers")
     end
     
     def configuration
