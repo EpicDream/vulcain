@@ -21,11 +21,14 @@ module Vulcain
             @state_machine.handle(message)
           rescue => e
             @messager.dispatcher.message(:failure, { status:'exception'})
-            if @state_machine && @state_machine.robot
+            begin 
+             if @state_machine && @state_machine.robot
               driver = @state_machine.robot.driver
               @messager.logging.message(:screenshot, driver.screenshot)
               @messager.logging.message(:page_source, driver.page_source)
               driver.quit
+              end
+            rescue
             end
             @messager.admin.message(:failure)
             @messager.logging.message(:error_message, e.inspect)

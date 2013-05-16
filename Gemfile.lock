@@ -13,7 +13,7 @@ GEM
       ffi (~> 1.0, >= 1.0.11)
     eventmachine (1.0.3)
     ffi (1.4.0)
-    headless (1.0.1)
+    json (1.7.7)
     metaclass (0.0.1)
     mocha (0.12.7)
       metaclass (~> 0.0.1)
@@ -31,6 +31,6 @@ PLATFORMS
 
 DEPENDENCIES
   amqp (~> 0.9.0)
-  headless
+  json (~> 1.7.7)
   mocha
   selenium-webdriver
