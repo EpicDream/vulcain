@@ -12,6 +12,7 @@ module Vulcain
   ADMIN_QUEUE = "admin-queue"
   VULCAIN_QUEUE = lambda { |vulcain_id| "vulcain-#{vulcain_id}" }
   CONFIG = YAML.load_file File.join(File.dirname(__FILE__), '../../config/vulcain.yml')
+  PING_INTERVAL = 30
   
   def spawn_new_worker
     Worker.new(vid).start

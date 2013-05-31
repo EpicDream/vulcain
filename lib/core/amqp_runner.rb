@@ -10,12 +10,11 @@ module Vulcain
         end
         exchange = channel.headers("amqp.headers")
         
-        Signal.trap "INT" do
-          Vulcain.messager.admin.message(:aborted)
-          connection.close { EventMachine.stop { abort }}
+        EM.add_periodic_timer(PING_INTERVAL) do
+          Vulcain.messager.admin.message(:ping)
         end
         
-        Signal.trap "HUP" do
+        Signal.trap "INT" do
           Vulcain.messager.admin.message(:aborted)
           connection.close { EventMachine.stop { abort }}
         end
