@@ -18,6 +18,11 @@ module Vulcain
           Vulcain.messager.admin.message(:aborted)
           connection.close { EventMachine.stop { abort }}
         end
+        
+        Signal.trap("TERM") do
+          Vulcain.messager.admin.message(:aborted)
+          connection.close { EventMachine.stop { abort }}
+        end
       
         yield channel, exchange
       
