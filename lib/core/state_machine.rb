@@ -29,6 +29,9 @@ module Vulcain
       when 'run'
         initialize_robot_from(message)
         @robot.run
+      when 'crawl'
+        initialize_robot_from(message)
+        @robot.crawl
       end
     end
     
