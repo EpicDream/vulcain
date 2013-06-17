@@ -6,5 +6,6 @@ gem "nokogiri"
 gem "html_to_plain_text", "~> 1.0.2"
 
 group :test do
+  gem "minitest"
   gem "mocha", :require => false
 end
