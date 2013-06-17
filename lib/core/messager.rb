@@ -2,7 +2,7 @@ module Vulcain
   class Messager
     MESSAGES_VERBS = { reload:'reload', failure:'failure', ping:'ping',
       :ask => 'ask', :message => 'message', :terminate => 'success', :next_step => 'next_step',
-      :assess => 'assess', :logging => 'logging'
+      :assess => 'assess', :logging => 'logging', answer:'answer', run:'run', crawl:'crawl'
       }
     ADMIN_MESSAGES_STATUSES = {
       started:'started', reloaded:'reloaded', aborted:'aborted', failure:'failure', terminated:'terminated',
@@ -17,6 +17,8 @@ module Vulcain
       @self_exchanger = SelfExchanger.new(vulcain_id, exchanger)
       @logging_exchanger = LoggingExchanger.new
       @admin_exchanger = AdminExchanger.new
+      @session = { vulcain_id:vulcain_id }
+      admin.message(:started)
     end
     
     def admin
