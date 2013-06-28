@@ -3,3 +3,4 @@
 lib/core/robots.rb
 bug.html
 config/vulcain.yml
+nohup.*
