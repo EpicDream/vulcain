@@ -37,6 +37,7 @@ module Vulcain
       end
       
     rescue => e
+      syslog(e)
       rescuer(e)
     end
     
@@ -50,6 +51,10 @@ module Vulcain
       @messager.logging.message(:error_message, e.inspect)
       @messager.logging.message(:stack_trace, e.backtrace.join("\n"))
       @robot.driver.quit
+    end
+    
+    def syslog e
+      File.open("/var/log/vulcain-dispatcher/vulcain.log", 'a+') {|f| f.write("\n\n#{Time.now}\n\n#{e.backtrace.join("\n")}") }
     end
     
   end
