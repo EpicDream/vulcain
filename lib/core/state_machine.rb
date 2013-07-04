@@ -46,10 +46,11 @@ module Vulcain
     def rescuer e
       @messager.dispatcher.message(:failure, { status:'exception'})
       @messager.admin.message(:failure)
-      @messager.logging.message(:screenshot, @robot.driver.screenshot)
-      @messager.logging.message(:page_source, @robot.driver.page_source)
       @messager.logging.message(:error_message, e.inspect)
       @messager.logging.message(:stack_trace, e.backtrace.join("\n"))
+      return unless @robot
+      @messager.logging.message(:screenshot, @robot.driver.screenshot)
+      @messager.logging.message(:page_source, @robot.driver.page_source)
       @robot.driver.quit
     end
     
