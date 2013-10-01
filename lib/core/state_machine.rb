@@ -35,7 +35,8 @@ module Vulcain
         initialize_robot_from(message)
         robot.crawl
       end
-      
+    rescue SystemExit
+        
     rescue => e
       syslog(e)
       rescuer(e)
@@ -51,7 +52,7 @@ module Vulcain
       return unless @robot
       @messager.logging.message(:screenshot, @robot.driver.screenshot)
       @messager.logging.message(:page_source, @robot.driver.page_source)
-      @robot.driver.quit
+      @robot.driver.quit if @robot.driver
     end
     
     def syslog e
