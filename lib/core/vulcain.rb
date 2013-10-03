@@ -37,6 +37,22 @@ module Vulcain
     @@messager
   end
   
+  def robot=robot
+    @@robot = robot
+  end
+  
+  def robot
+    @@robot
+  end
+  
+  def killed=status
+    @@killed = status
+  end
+  
+  def killed?
+    defined?(@@killed) && @@killed
+  end
+  
   extend self
 end
 

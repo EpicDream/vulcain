@@ -11,6 +11,7 @@ module Vulcain
       @messager.session = message['context']['session']
       @robot = Object.const_get(message['vendor']).new(message['context']).robot
       @robot.messager = @messager
+      Vulcain.robot = @robot
     end
     
     def handle message
@@ -36,10 +37,11 @@ module Vulcain
         robot.crawl
       end
     rescue SystemExit
-        
     rescue => e
-      syslog(e)
-      rescuer(e)
+      unless Vulcain.killed?
+        syslog(e)
+        rescuer(e)
+      end
     end
     
     private

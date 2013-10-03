@@ -38,4 +38,4 @@ DEPENDENCIES
   minitest
   mocha
   nokogiri
-  selenium-webdriver
+  selenium-webdriver (= 2.31.0)

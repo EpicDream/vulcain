@@ -15,6 +15,8 @@ module Vulcain
         end
         
         Signal.trap "INT" do
+          Vulcain.killed = true
+          Vulcain.robot.driver.quit rescue nil
           Vulcain.messager.admin.message(:aborted)
           connection.close { EventMachine.stop { abort }}
         end
